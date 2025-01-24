@@ -1,0 +1,37 @@
+{
+    "Python": [
+        "1.What is the difference between deep and shallow copy?",
+        "2.How can the ternary operators be used in python?",
+        "3.What is the function of \u201cself\u201d?",
+        "4.What is the process of compilation and linking in python?",
+        "5.Write a program to read and write the binary data using python?"
+    ],
+    "SQL": [
+        "1.What are the different types of Coordinations of the Master with the Detail block?",
+        "2.How can a group in a cross products be visually distinguished from a group that does not form a cross product?",
+        "3.Is it possible to link two groups inside a cross products after the cross products group has been created?",
+        "4.What is the difference between OLE Server & Ole Container?",
+        "5.What are the built-ins used for finding object ID functions?"
+    ],
+    "DSA": [
+        "1.How to find the third element from the end in a linked list in one pass?",
+        "2.How to reverse a linked list using recursion and iteration?",
+        "3.What is a priority queue? What are the applications for priority queue?",
+        "4.Find the subsequence of length 3 with the highest product from a sequence of non-negative integers, with the elements in increasing order.",
+        "5.Write a recursive function to calculate the height of a binary tree"
+    ],
+    "PowerBI": [
+        "1.Can you explain a complex Power BI project you've worked on, detailing the challenges you faced and how you overcame them?",
+        "2.What is the comprehensive working system of Power BI?",
+        "3.Can you describe your experience with Power BI, including the versions or features you are most familiar with?",
+        "4.How do you stay updated with new Power BI features and data analysis trends? Additionally, can you share how you applied a new feature or trend in a recent project?",
+        "5.In your opinion, what are the best practices for designing user-friendly and impactful Power BI dashboards?"
+    ],
+    "Excel": [
+        "1.How do you create a pivot table?",
+        "2.Differentiate between Pivot charts and standard charts.",
+        "3.What is VLOOKUP in excel? How does the VLOOKUP function work?",
+        "4.What distinguishes a function from a subroutine in VBA?",
+        "5.Provide an illustration of the approximate match."
+    ]
+}
