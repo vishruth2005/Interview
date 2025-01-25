@@ -1,0 +1,74 @@
+{
+    "questions": [
+        {
+            "id": "nlp_1",
+            "question": "Explain the concept of word embeddings and how they differ from traditional one-hot encoding in NLP applications.",
+            "template": "The candidate should explain that word embeddings are dense vector representations of words in a continuous vector space, where semantically similar words are mapped to nearby points. They should contrast this with one-hot encoding's sparse, high-dimensional vectors. The explanation should cover key benefits like capturing semantic relationships, reduced dimensionality, and improved generalization. Examples of popular embedding techniques (Word2Vec, GloVe, FastText) should be mentioned.",
+            "criteria": "The response should define both word embeddings and one-hot encoding, explain the key differences, highlight the advantages of embeddings, and demonstrate understanding of practical applications. Examples and specific embedding techniques should be included.",
+            "category": "embeddings"
+        },
+        {
+            "id": "nlp_2",
+            "question": "How do transformer architectures handle long-range dependencies in text better than traditional RNNs?",
+            "template": "The candidate should explain the self-attention mechanism in transformers and how it allows direct connections between any two positions in a sequence. They should contrast this with RNNs' sequential processing and vanishing gradient problems. The explanation should cover how positional encoding maintains sequence information and how parallel processing improves efficiency.",
+            "criteria": "The response must explain self-attention mechanisms, compare with RNN limitations, discuss positional encodings, and demonstrate understanding of the practical advantages in processing long sequences.",
+            "category": "transformers"
+        },
+        {
+            "id": "nlp_3",
+            "question": "Describe the process of text preprocessing in NLP and why each step is important.",
+            "template": "The candidate should outline key preprocessing steps: tokenization, lowercasing, removing special characters/numbers, handling stop words, stemming/lemmatization. For each step, they should explain its purpose and impact on downstream tasks. They should also discuss when certain steps might be skipped or modified based on the specific application.",
+            "criteria": "The response should cover major preprocessing steps, explain the rationale behind each step, discuss their impact on NLP tasks, and show understanding of when to apply or skip certain steps.",
+            "category": "preprocessing"
+        },
+        {
+            "id": "nlp_4",
+            "question": "Explain how BERT's bidirectional training approach works and why it's significant for NLP tasks.",
+            "template": "The candidate should explain BERT's masked language modeling approach, how it enables true bidirectional context understanding, and contrast it with traditional left-to-right language models. They should discuss the next sentence prediction task and how these pre-training objectives help in downstream tasks.",
+            "criteria": "The response must cover masked language modeling, explain bidirectional context, contrast with traditional approaches, and demonstrate understanding of how pre-training helps in various NLP tasks.",
+            "category": "transformers"
+        },
+        {
+            "id": "nlp_5",
+            "question": "What are the challenges in handling out-of-vocabulary (OOV) words in NLP systems and how can they be addressed?",
+            "template": "The candidate should explain the OOV problem, discuss various solutions like subword tokenization (BPE, WordPiece, SentencePiece), character-level models, and handling of rare words. They should compare different approaches and their trade-offs.",
+            "criteria": "The response should define the OOV problem, explain multiple solution approaches, discuss their pros and cons, and show understanding of when to use each approach.",
+            "category": "vocabulary"
+        },
+        {
+            "id": "nlp_6",
+            "question": "Describe the concept of attention mechanisms in NLP and how they have evolved from basic to multi-head attention.",
+            "template": "The candidate should explain basic attention mechanisms, their role in sequence-to-sequence models, the evolution to self-attention, and finally multi-head attention. They should cover how attention weights are calculated and used, and why multiple attention heads are beneficial.",
+            "criteria": "The response must explain attention mechanisms, their evolution, multi-head attention benefits, and demonstrate understanding of practical applications.",
+            "category": "attention"
+        },
+        {
+            "id": "nlp_7",
+            "question": "How do you handle class imbalance in text classification tasks?",
+            "template": "The candidate should discuss various approaches: data-level methods (oversampling, undersampling, SMOTE), algorithm-level methods (class weights, focal loss), and ensemble methods. They should explain the pros and cons of each approach and when to use them.",
+            "criteria": "The response should cover multiple approaches to handling imbalance, explain their trade-offs, and show understanding of when to apply each method.",
+            "category": "classification"
+        },
+        {
+            "id": "nlp_8",
+            "question": "Explain the concept of transfer learning in NLP and its practical applications.",
+            "template": "The candidate should explain how pre-trained models can be fine-tuned for specific tasks, discuss the benefits of transfer learning (reduced data requirements, faster training, better performance), and cover different fine-tuning strategies.",
+            "criteria": "The response must explain transfer learning concepts, benefits, fine-tuning approaches, and demonstrate understanding of practical applications.",
+            "category": "transfer_learning"
+        },
+        {
+            "id": "nlp_9",
+            "question": "How do you evaluate the performance of a machine translation system?",
+            "template": "The candidate should discuss various metrics (BLEU, METEOR, TER, ROUGE), their calculations, strengths, and limitations. They should also cover human evaluation approaches and the importance of considering both automatic metrics and human judgment.",
+            "criteria": "The response should explain multiple evaluation metrics, their pros and cons, and show understanding of both automatic and human evaluation approaches.",
+            "category": "evaluation"
+        },
+        {
+            "id": "nlp_10",
+            "question": "Describe the challenges in handling multilingual NLP tasks and common solutions.",
+            "template": "The candidate should discuss challenges like different grammar structures, vocabulary differences, resource scarcity for some languages, and solutions like multilingual embeddings, zero-shot learning, and cross-lingual transfer learning.",
+            "criteria": "The response must cover key challenges in multilingual NLP, explain various solution approaches, and demonstrate understanding of practical implementations.",
+            "category": "multilingual"
+        }
+    ]
+} 

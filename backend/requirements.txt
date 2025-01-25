@@ -48,7 +48,7 @@ llama-cloud==0.1.10
 llama-index==0.12.13
 llama-index-agent-openai==0.4.2
 llama-index-cli==0.4.0
-llama-index-core==0.12.13
+llama-index-core==0.10.5
 llama-index-embeddings-huggingface==0.5.1
 llama-index-embeddings-openai==0.3.1
 llama-index-indices-managed-llama-cloud==0.6.4
@@ -69,7 +69,7 @@ mypy-extensions==1.0.0
 nest-asyncio==1.6.0
 networkx==3.4.2
 nltk==3.9.1
-numpy==1.26.4
+numpy==1.24.3
 openai==1.60.0
 overrides==7.7.0
 packaging==24.2
@@ -96,6 +96,7 @@ pyparsing==3.2.1
 pypdf==5.1.0
 PyPDF2==3.0.1
 python-dateutil==2.9.0.post0
+python-dotenv==1.0.0
 python-dotenv==1.0.1
 pytz==2024.2
 PyYAML==6.0.2
@@ -106,7 +107,7 @@ rsa==4.9
 safetensors==0.5.2
 scikit-learn==1.6.1
 scipy==1.15.1
-sentence-transformers==3.4.0
+sentence-transformers==2.5.1
 setuptools==75.8.0
 shellingham==1.5.4
 six==1.17.0
@@ -122,7 +123,6 @@ threadpoolctl==3.5.0
 tiktoken==0.8.0
 tokenizers==0.21.0
 tomli==2.2.1
-torch==2.5.1
 tqdm==4.67.1
 transformers==4.48.1
 typer==0.15.1
@@ -133,3 +133,7 @@ uritemplate==4.1.1
 urllib3==2.3.0
 wrapt==1.17.2
 yarl==1.18.3
+streamlit==1.31.1
+torch==2.2.0
+phi-agent==0.1.0
+pybind11>=2.12.0
