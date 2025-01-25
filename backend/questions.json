@@ -1,74 +1,144 @@
 {
     "questions": [
         {
-            "id": "nlp_1",
-            "question": "Explain the concept of word embeddings and how they differ from traditional one-hot encoding in NLP applications.",
-            "template": "The candidate should explain that word embeddings are dense vector representations of words in a continuous vector space, where semantically similar words are mapped to nearby points. They should contrast this with one-hot encoding's sparse, high-dimensional vectors. The explanation should cover key benefits like capturing semantic relationships, reduced dimensionality, and improved generalization. Examples of popular embedding techniques (Word2Vec, GloVe, FastText) should be mentioned.",
-            "criteria": "The response should define both word embeddings and one-hot encoding, explain the key differences, highlight the advantages of embeddings, and demonstrate understanding of practical applications. Examples and specific embedding techniques should be included.",
-            "category": "embeddings"
+            "id": "1",
+            "question": "In the context of developing a go-to-market strategy for a South African market, how would you approach the challenge of segmenting the target market, considering the varying economic factors such as income levels and access to infrastructure?",
+            "template": "The candidate should begin by acknowledging the complexities of the South African market and the importance of detailed segmentation based on demographics, economic conditions, and access to resources. They should propose a method that combines primary and secondary data. They must elaborate on utilizing data to generate customer personas. They must provide multiple examples to demonstrate their understanding of the issue. They must discuss the need to prioritize customer segments based on potential and fit for the company's objectives. They should include the methods like surveys, interviews, focus groups, and data analysis. They should also discuss the role of economic factors, including household income levels, access to electricity, internet and geographical variations impacting the target market for the go-to-market strategy.",
+            "criteria": "The answer should clearly demonstrate the candidate's ability to segment markets based on socio-economic conditions, combine primary and secondary market research methods, articulate the use of customer personas, and show an understanding of how economic and infrastructural factors influence market segmentation. The candidate must highlight the need to prioritize segments based on the fit to the company's objectives. The candidate must also demonstrate practical understanding of different data collection methods.",
+            "category": "Project Based"
         },
         {
-            "id": "nlp_2",
-            "question": "How do transformer architectures handle long-range dependencies in text better than traditional RNNs?",
-            "template": "The candidate should explain the self-attention mechanism in transformers and how it allows direct connections between any two positions in a sequence. They should contrast this with RNNs' sequential processing and vanishing gradient problems. The explanation should cover how positional encoding maintains sequence information and how parallel processing improves efficiency.",
-            "criteria": "The response must explain self-attention mechanisms, compare with RNN limitations, discuss positional encodings, and demonstrate understanding of the practical advantages in processing long sequences.",
-            "category": "transformers"
+            "id": "2",
+            "question": "When setting up an impact assessment system for a non-profit, using the OECD DAC criteria, how would you prioritize and evaluate the 'sustainability' criteria, specifically addressing the long-term viability of the project's outcomes and the capacity of the local stakeholders?",
+            "template": "The candidate should explain the sustainability criteria within the OECD DAC framework. They should emphasize that it is related to the long-term maintenance of benefits after the project concludes. They should propose practical steps to measure the capacity of local stakeholders, including their access to resources, level of training, and willingness to engage with project goals. They should elaborate on creating a transition plan to ensure local ownership, highlighting the importance of involving the community to ensure the sustainability of the project. The candidate must discuss the importance of financial planning to ensure the long-term viability. They should propose an M&E framework to assess the sustainability of the project.",
+            "criteria": "The response should articulate a deep understanding of the sustainability criteria, its importance in impact assessment, the ability to analyze local stakeholders' capacity, and propose practical strategies for project design and implementation that prioritize long-term ownership and financial planning. The proposed strategies must demonstrate a practical understanding of setting up an M&E framework that evaluates sustainability.",
+            "category": "Project Based"
         },
         {
-            "id": "nlp_3",
-            "question": "Describe the process of text preprocessing in NLP and why each step is important.",
-            "template": "The candidate should outline key preprocessing steps: tokenization, lowercasing, removing special characters/numbers, handling stop words, stemming/lemmatization. For each step, they should explain its purpose and impact on downstream tasks. They should also discuss when certain steps might be skipped or modified based on the specific application.",
-            "criteria": "The response should cover major preprocessing steps, explain the rationale behind each step, discuss their impact on NLP tasks, and show understanding of when to apply or skip certain steps.",
-            "category": "preprocessing"
+            "id": "3",
+            "question": "In building a model to create an optimized portfolio using machine learning, specifically employing LSTM for predicting stock prices, how would you address the challenge of handling the inherent non-stationarity of financial time series data, particularly focusing on feature engineering to enhance model accuracy and robustness?",
+            "template": "The candidate should demonstrate a strong understanding of the limitations of applying ML models on raw financial time series data due to its non-stationarity. They should propose using various feature engineering techniques, including differencing, rolling means, and volatility measures, to transform the data into a stationary form. The candidate should explain the importance of selecting appropriate time windows and lags for LSTM inputs, and the impact these choices have on prediction accuracy. They should discuss how they would utilize time-based features. They should mention using data transformations like normalization to ensure the model's convergence, performance, and generalization ability, and how these ensure robustness of the model. The response should highlight model validation techniques such as time-based cross-validation, backtesting, and out-of-sample testing to confirm the model's ability.",
+            "criteria": "The answer must showcase a deep understanding of time series analysis and machine learning concepts including stationarity. It should highlight the candidate's practical knowledge of different feature engineering techniques and their relevance in improving prediction accuracy. The candidate must be able to articulate their impact on model stability and generalization, and mention proper validation techniques for ML models. The use of technical terms should be accurate and used correctly.",
+            "category": "Project Based"
         },
         {
-            "id": "nlp_4",
-            "question": "Explain how BERT's bidirectional training approach works and why it's significant for NLP tasks.",
-            "template": "The candidate should explain BERT's masked language modeling approach, how it enables true bidirectional context understanding, and contrast it with traditional left-to-right language models. They should discuss the next sentence prediction task and how these pre-training objectives help in downstream tasks.",
-            "criteria": "The response must cover masked language modeling, explain bidirectional context, contrast with traditional approaches, and demonstrate understanding of how pre-training helps in various NLP tasks.",
-            "category": "transformers"
+            "id": "4",
+            "question": "When developing a pitch deck to attract investments for a new venture in the South African market, how would you tailor the 'market opportunity' section to demonstrate a deep understanding of the competitive landscape by employing Porter's Five Forces framework to identify potential barriers to entry and competitive advantages?",
+            "template": "The candidate should thoroughly understand Porter's Five Forces framework. They should propose using the framework to perform a comprehensive competitive landscape analysis and identify both threats and opportunities. They should explain how they would identify barriers to entry such as economies of scale, switching costs, and capital requirements, and determine the competitive advantages a new company can leverage, such as pricing, quality or proprietary technology. The candidate must use real-world scenarios to explain each force's effect on potential profitability and the steps required to navigate it. They must use financial data to highlight specific opportunities to the audience. They must emphasize that the market opportunity section of the pitch deck should include all the insights derived from Porter's Five Forces analysis, and must be used to validate the investor's interest. They should highlight that this section should also clearly showcase the company's strategy to mitigate identified threats and capitalize on identified opportunities.",
+            "criteria": "The candidate should showcase a clear understanding of Porter's Five Forces framework and how it's used to evaluate the competitive environment. The answer should articulate practical understanding of incorporating the analysis into a pitch deck that highlights the competitive advantages, threats, and opportunities, and demonstrates clear thinking and a strategic approach. They must showcase an understanding of presenting and addressing investment concerns.",
+            "category": "Project Based"
         },
         {
-            "id": "nlp_5",
-            "question": "What are the challenges in handling out-of-vocabulary (OOV) words in NLP systems and how can they be addressed?",
-            "template": "The candidate should explain the OOV problem, discuss various solutions like subword tokenization (BPE, WordPiece, SentencePiece), character-level models, and handling of rare words. They should compare different approaches and their trade-offs.",
-            "criteria": "The response should define the OOV problem, explain multiple solution approaches, discuss their pros and cons, and show understanding of when to use each approach.",
-            "category": "vocabulary"
+            "id": "5",
+            "question": "In a consulting engagement where your client is looking to improve their organizational structure, how would you, using a data-driven approach, analyze the existing organizational structure to identify bottlenecks and inefficiencies, and what specific metrics or KPIs would you use to assess the effectiveness of different structural options like functional or team-based structures?",
+            "template": "The candidate should discuss the importance of data-driven analysis in organizational redesign. They must showcase practical knowledge of analyzing organisational data. They should talk about the need to understand different organizational structures like hierarchical, functional, matrix, and team-based, and how to map them in an organisational setting. They should propose metrics such as the time taken to complete projects, operational costs, employee feedback, and communication bottlenecks to evaluate existing structures, highlighting the strengths and weaknesses of each metric. They should discuss the approach for measuring employee satisfaction and how it impacts productivity. They should also discuss how they will identify interdependencies between different teams, how it will impact various structural models, and how they will choose the most optimal model. They must also talk about the importance of aligning the business goals with the organisational structures. The candidate must give real-world examples for different scenarios and evaluate each structure's applicability in those scenarios.",
+            "criteria": "The response must showcase strong data analysis and problem-solving skills. The candidate should demonstrate the ability to evaluate different organizational structure models, understand how they operate in the real world, choose key performance indicators to measure their efficiency, and propose practical steps to optimize the process. They should show a keen understanding of aligning the organizational structure with the business objective and making data-backed recommendations.",
+            "category": "Project Based"
         },
         {
-            "id": "nlp_6",
-            "question": "Describe the concept of attention mechanisms in NLP and how they have evolved from basic to multi-head attention.",
-            "template": "The candidate should explain basic attention mechanisms, their role in sequence-to-sequence models, the evolution to self-attention, and finally multi-head attention. They should cover how attention weights are calculated and used, and why multiple attention heads are beneficial.",
-            "criteria": "The response must explain attention mechanisms, their evolution, multi-head attention benefits, and demonstrate understanding of practical applications.",
-            "category": "attention"
+            "id": "6",
+            "question": "Explain how using Porter's Five Forces framework helps in crafting a go-to-market strategy.",
+            "template": "The candidate should first explain what Porter's Five Forces framework is, highlighting its components (threat of new entrants, bargaining power of suppliers/buyers, threat of substitutes, and competitive rivalry). Then, the candidate should explain how each force helps to analyze the attractiveness of the market and thus influence the go-to-market strategy by identifying opportunities and threats.",
+            "criteria": "The answer should demonstrate a clear understanding of Porter's Five Forces framework and its components. The explanation should explicitly state how analyzing these forces informs key decisions in a go-to-market strategy, such as pricing, distribution, and marketing. The candidate should be able to articulate how each of the forces can influence strategic planning.",
+            "category": "Theoretical"
         },
         {
-            "id": "nlp_7",
-            "question": "How do you handle class imbalance in text classification tasks?",
-            "template": "The candidate should discuss various approaches: data-level methods (oversampling, undersampling, SMOTE), algorithm-level methods (class weights, focal loss), and ensemble methods. They should explain the pros and cons of each approach and when to use them.",
-            "criteria": "The response should cover multiple approaches to handling imbalance, explain their trade-offs, and show understanding of when to apply each method.",
-            "category": "classification"
+            "id": "7",
+            "question": "Describe how using both KNN and LSTM can help in building an optimized portfolio.",
+            "template": "The candidate should first explain what KNN and LSTM are, highlighting their basic differences and use cases. They should then describe how KNN can be used to cluster stocks with similar characteristics, and how LSTM can be used to predict stock prices. Finally, the candidate should explain how the insights from both approaches can be combined to build an optimized portfolio by identifying potential investment opportunities and mitigating risk.",
+            "criteria": "The answer should demonstrate a clear understanding of both KNN and LSTM models, and their respective strengths. The explanation should explicitly state how these models contribute to specific aspects of building an optimized portfolio. It must highlight the complementarity of these two techniques. The candidate should articulate a clear, well-structured approach.",
+            "category": "Theoretical"
         },
         {
-            "id": "nlp_8",
-            "question": "Explain the concept of transfer learning in NLP and its practical applications.",
-            "template": "The candidate should explain how pre-trained models can be fine-tuned for specific tasks, discuss the benefits of transfer learning (reduced data requirements, faster training, better performance), and cover different fine-tuning strategies.",
-            "criteria": "The response must explain transfer learning concepts, benefits, fine-tuning approaches, and demonstrate understanding of practical applications.",
-            "category": "transfer_learning"
+            "id": "8",
+            "question": "How does using the OECD DAC framework aid in setting up an impact assessment system for a non-profit organization?",
+            "template": "The candidate should begin by explaining what the OECD DAC framework is, emphasizing its role in international development and aid effectiveness. They should then describe how the framework's principles and evaluation standards can be applied to set up an impact assessment system, mentioning how it helps in setting clear indicators and ensures transparent reporting. The answer should focus on the structure it provides for measuring development results.",
+            "criteria": "The answer should clearly define the OECD DAC framework and its role in international development. The explanation should detail how the framework's guidelines for evaluation and development effectiveness translate into specific steps for setting up an impact assessment system for a non-profit, focusing on key elements like results measurement and reporting standards. The candidate should clearly highlight the practical application of the OECD DAC framework.",
+            "category": "Theoretical"
         },
         {
-            "id": "nlp_9",
-            "question": "How do you evaluate the performance of a machine translation system?",
-            "template": "The candidate should discuss various metrics (BLEU, METEOR, TER, ROUGE), their calculations, strengths, and limitations. They should also cover human evaluation approaches and the importance of considering both automatic metrics and human judgment.",
-            "criteria": "The response should explain multiple evaluation metrics, their pros and cons, and show understanding of both automatic and human evaluation approaches.",
-            "category": "evaluation"
+            "id": "9",
+            "question": "Skill based Questions: 1. In SQL, describe the difference between 'WHERE' and 'HAVING' clauses, and provide a scenario where you would use 'HAVING' instead of 'WHERE'.",
+            "template": "The candidate should explain that the WHERE clause filters rows before grouping, while the HAVING clause filters rows after grouping. They should give an example, such as finding departments with an average salary above a certain value, demonstrating that HAVING is used to filter based on aggregated data.",
+            "criteria": "The answer should clearly and correctly explain the difference and use case of WHERE vs HAVING, and present an example showing the usage of HAVING with aggregate functions.",
+            "category": "Technical Skills"
         },
         {
-            "id": "nlp_10",
-            "question": "Describe the challenges in handling multilingual NLP tasks and common solutions.",
-            "template": "The candidate should discuss challenges like different grammar structures, vocabulary differences, resource scarcity for some languages, and solutions like multilingual embeddings, zero-shot learning, and cross-lingual transfer learning.",
-            "criteria": "The response must cover key challenges in multilingual NLP, explain various solution approaches, and demonstrate understanding of practical implementations.",
-            "category": "multilingual"
+            "id": "10",
+            "question": "2. Describe the process of creating a financial model in Excel for a company's valuation, and explain how you would handle sensitivity analysis to assess the impact of different variables.",
+            "template": "The candidate should outline the steps involved, which includes projecting income statements, balance sheets, and cash flow statements, and using discounted cash flow (DCF) analysis to calculate the intrinsic value. The candidate should also explain how they would conduct sensitivity analysis using data tables to see how the valuation changes based on altering the inputs such as discount rate and growth rate.",
+            "criteria": "The answer should include creating projected financial statements, performing DCF analysis and using techniques such as data tables for sensitivity analysis and interpreting the results.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "11",
+            "question": "3. Explain how you would use Power BI to create an interactive dashboard that visualizes sales data, including the steps to connect to the data source and create effective visualizations.",
+            "template": "The candidate should describe the process, starting with importing data, transforming it, and creating measures, and then describe the selection of appropriate visualizations (e.g. bar chart for sales by region, a time series for sales over time) and the creation of filters and slicers to provide interactive filtering of the data. They should also be able to articulate the importance of choosing visuals that communicate insights in a user-friendly manner.",
+            "criteria": "The response must touch upon data connectivity, transformation, measure creation, the use of visualization, filters, and the overall design of a clear and intuitive dashboard.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "12",
+            "question": "4. What are the differences between a VLOOKUP and an INDEX/MATCH function in Excel, and in what scenarios would you prefer using INDEX/MATCH over VLOOKUP?",
+            "template": "The candidate should explain that VLOOKUP has limitations such as the lookup column needing to be on the left, and its inflexibility when columns are added/deleted. INDEX/MATCH is a more flexible alternative that resolves these limitations, because it is not dependent on the order of the columns. They should provide examples, such as when you need to perform a right-to-left lookup.  ",
+            "criteria": "The response must highlight the limitations of VLOOKUP, the advantages of INDEX/MATCH (flexibility), and include use cases when INDEX/MATCH is preferred over VLOOKUP.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "13",
+            "question": "5. In SQL, how would you use window functions to calculate a running total of sales for each product category?",
+            "template": "The candidate should know about window functions and articulate how they would use a window function like SUM() with an OVER() clause to calculate cumulative sales, grouping the data by product category and ordering by a relevant date or sequence. They should also explain the syntax of using the OVER() clause and its ability to perform calculations across a set of rows that are related to the current row.",
+            "criteria": "The response must describe window functions, their syntax, and how they are used to calculate running totals, with an understanding of the OVER() clause and partitioning.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "14",
+            "question": "6. Explain how you would use Python to read a large CSV file, clean the data by removing any missing values, and store the cleaned data in a new CSV file.",
+            "template": "The candidate should explain how to use libraries like pandas to read the CSV file, identify missing values using isnull() function, remove or replace missing values appropriately, and then save the resulting clean data frame to a new CSV file. They should also highlight different approaches to handle missing values such as imputation or dropping.",
+            "criteria": "The answer should demonstrate the process of data cleaning using libraries, such as pandas, and show the ability to remove or impute the missing values appropriately and write to a CSV file.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "15",
+            "question": "7. How can you leverage Python's 'requests' library to interact with an API, including sending a GET request and processing the JSON response?",
+            "template": "The candidate should explain how to use the 'requests' library to send a GET request to an API endpoint, including handling the response status code, parsing the JSON data using the 'json()' method, and extracting specific information from the parsed data. They must also be able to discuss handling errors.",
+            "criteria": "The response should include correct usage of the library, handling status codes, decoding of JSON responses, and data parsing with knowledge of error handling.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "16",
+            "question": "8.  In the context of financial modeling, describe what is a Monte Carlo simulation and its significance, and how you can apply it in excel for risk management analysis?",
+            "template": "The candidate should explain that a Monte Carlo simulation is a technique that uses random sampling to estimate the probability of different outcomes by modeling uncertainty. They should articulate how you can apply it in Excel by generating random numbers for uncertain inputs and performing multiple simulations to understand the potential distribution of outcomes using add-ins or VBA. They must also be able to explain its significance for risk management.",
+            "criteria": "The response must clearly explain the technique, demonstrate the process in Excel and identify its significance in risk management.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "17",
+            "question": "9. In terms of database management, what are the key differences between indexing and partitioning in SQL, and how do they impact query performance?",
+            "template": "The candidate should differentiate between indexing (a data structure to improve retrieval speed by creating pointers) and partitioning (splitting the table into smaller, manageable parts). They should explain that indexing improves search performance and partitioning allows better data management by improving query times when filtering data.",
+            "criteria": "The response should differentiate between indexing and partitioning, mentioning their respective benefits on query performance by giving specific use cases.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "18",
+            "question": "10. In Python, describe how you can create a function using the decorators and their use cases, with a coding example.",
+            "template": "The candidate should describe decorators as a design pattern that allows the addition of functionality to an existing function using wrapper functions, without modifying the function. The response should also include an example use case and code demonstrating how a decorator is defined and used to implement logging or timing functionality.",
+            "criteria": "The response should include a definition of decorators, example use cases, and a code demonstrating definition and usage.",
+            "category": "Technical Skills"
+        },
+        {
+            "id": "19",
+            "question": "Tell me about a time when you had to analyze a large amount of data to make a strategic recommendation, and the data was initially disorganized or incomplete.",
+            "template": "The candidate should describe a situation where they faced disorganized or incomplete data, preferably showcasing a structured approach to data analysis. They should explain how they cleaned and organized the data, identified any gaps or inconsistencies, and ultimately derived meaningful insights that led to a strategic recommendation. The answer should highlight their problem-solving skills and analytical abilities. They need to clearly outline the steps taken to organize the data, the tools or methods they used, and the specific insight they drew from the data that helped make a decision. They should demonstrate the ability to deal with imperfect information and still deliver value.",
+            "criteria": "The answer must demonstrate a structured approach to data analysis. The candidate should clearly explain how they handled missing or inconsistent data, the specific analytical techniques used, and the impact of their analysis on decision-making. The depth of analysis, the tools mentioned, and the strategic nature of the recommendation will be evaluated. The answer should also reveal the candidate\u2019s comfort and proficiency with data-driven decision-making.",
+            "category": "Situational"
+        },
+        {
+            "id": "20",
+            "question": "Describe a time when you had to influence a team to adopt a new approach to a project, where initial resistance to change was a significant hurdle.",
+            "template": "The candidate should narrate a scenario where they proactively championed a new approach to a project, and were met with initial reluctance from the team. They should clearly articulate the reasons for the resistance and their understanding of the team dynamics. The candidate needs to outline their strategies used to overcome this pushback, such as explaining the benefits of the new method, using data or logic to support their proposal, and proactively engaging with stakeholders to address their concerns. The candidate should showcase their ability to drive a change, their communication and interpersonal skills, and their overall capacity for influencing others.",
+            "criteria": "The answer needs to show evidence of understanding team dynamics and change management. The candidate must clearly explain the reasons behind the initial resistance, the specific tactics used to overcome that resistance, and the outcome of the influence efforts. Specific examples of how they tried to persuade others and evidence of their understanding of communication and influencing techniques are required. The success of the approach and the candidate's contribution to that success will also be considered.",
+            "category": "Situational"
         }
     ]
-} 
+}

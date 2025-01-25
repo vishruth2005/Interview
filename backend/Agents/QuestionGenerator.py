@@ -6,6 +6,12 @@ import os
 import json
 from pydantic import BaseModel, Field
 load_dotenv()
+class FinalQuestion(BaseModel):
+    id: str = Field(..., description="Unique identifier for the question")
+    question: str = Field(..., description="Question text")
+    template: str = Field(..., description="Expected approach to solve the problem")
+    criteria: str = Field(..., description="Criteria to judge the answer")
+    category: str = Field(..., description="Category of the question")
 
 class Question(BaseModel):
     question: str = Field(..., description="Question should be inserted here.")
@@ -25,7 +31,7 @@ class QuestionGenerator:
         self.company = company
         self.agent1 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Question)
         self.agent2 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")))
-        with open('../data/skills.json', 'r') as file:
+        with open('backend/data/skills.json', 'r') as file:
             self.skill_guide = json.load(file)
         self.situation_guide = {
             "collaboration": [
@@ -303,11 +309,49 @@ class QuestionGenerator:
         run: RunResponse = self.agent1.run(prompt)
         return run.content
     
+    def save_questions_to_json(self, interview_questions, theoretical_questions, skill_questions, situational_questions):
+        """Convert all questions to FinalQuestion format and save to questions.json"""
+        all_questions = []
+        question_id = 1
 
+        def process_questions(questions_json, category):
+            nonlocal question_id
+            data = json.loads(questions_json)
+            # Handle the nested structure
+            if isinstance(data, list) and len(data) > 0:
+                if "interview_questions" in data[0]:
+                    questions = data[0]["interview_questions"]
+                elif "questions" in data[0]:
+                    questions = data[0]["questions"]
+                else:
+                    questions = data
+            else:
+                questions = data
+
+            for q in questions:
+                final_q = FinalQuestion(
+                    id=str(question_id),
+                    question=q["question"],
+                    template=q["expected_approach"],
+                    criteria=q["criteria"],
+                    category=category
+                )
+                all_questions.append(final_q.dict())
+                question_id += 1
+
+        # Process each type of question
+        process_questions(to_json(interview_questions), "Project Based")
+        process_questions(to_json(theoretical_questions), "Theoretical")
+        process_questions(to_json(skill_questions), "Technical Skills")
+        process_questions(to_json(situational_questions), "Situational")
+
+        # Save to questions.json
+        with open('backend/questions.json', 'w') as f:
+            json.dump({"questions": all_questions}, f, indent=4)
 
 if __name__ == "__main__":
     builder = QuestionGenerator(
-        "../data/resume.pdf",
+        "backend/data/resume.pdf",
         "Associate",
         "Boston Consulting Groups"
     )
@@ -336,11 +380,10 @@ if __name__ == "__main__":
         situation_qs = builder.Generate_Situations()
         situational_questions.append(situation_qs)
 
-    # Print all questions
-    print(to_json(interview_questions[0]))
-
-    print(to_json(theoretical_questions[0]))
-
-    print(to_json(skill_questions[0]))
-
-    print(to_json(situational_questions[0]))
+    # Save all questions to questions.json
+    builder.save_questions_to_json(
+        interview_questions[0],
+        theoretical_questions[0],
+        skill_questions[0],
+        situational_questions[0]
+    )
