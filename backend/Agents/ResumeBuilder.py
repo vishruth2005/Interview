@@ -53,7 +53,7 @@ class ResumeBuilder:
         self.access_token = os.getenv("GITHUB_ACCESS_TOKEN")
         self.linkedin_profile_url = linkedin_profile_url
         self.role = role
-        self.agent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")))
+        self.agent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), markdown=True)
         self.projectagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Projects)
         self.linkinagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = LinkedInProfile)
         self.skillagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Skills)
@@ -64,7 +64,7 @@ class ResumeBuilder:
 
     def fetch_linkedin_profile(self):
         async def get_filtered_profile_data(profile_url):
-            proxycurl = Proxycurl('oMWBNSYHey3RsaryiXvfFA')
+            proxycurl = Proxycurl(os.getenv("PROXYCURL_API_KEY"))
             profile_data = await proxycurl.linkedin.person.get(linkedin_profile_url=profile_url)
 
             # Filter the relevant data
@@ -174,15 +174,24 @@ class ResumeBuilder:
             "Your task is to use the provided keywords and key sections for each project to build a summary of technical accomplishments, "
             "core contributions, and notable results. Focus on showcasing expertise and measurable achievements, and avoid soft skills. "
             f"The extracted keywords and sections are:\n\n{extracted_keywords_and_sections}\n\n"
-            "For each project, format the summary as follows:\n"
-            "ProjectName:\n"
-            "1. [First key point]\n"
-            "2. [Second key point]\n"
-            "3. [Third key point]\n"
-            "Do not use markdown. The output should be plain text."
+            "Format the summary for all projects under the following heading:\n"
+            "## Projects:\n"
+            "1. **ProjectName 1:**\n"
+            "   - **[First key point]**\n"
+            "   - **[Second key point]**\n"
+            "   - **[Third key point]**\n\n"
+            "2. **ProjectName 2:**\n"
+            "   - **[First key point]**\n"
+            "   - **[Second key point]**\n"
+            "   - **[Third key point]**\n\n"
+            "3. **ProjectName 3:**\n"
+            "   - **[First key point]**\n"
+            "   - **[Second key point]**\n"
+            "   - **[Third key point]**\n\n"
+            "Do not include any extra text or explanations; the output should be in markdown format."
         )
 
-        resume_building_run = self.projectagent.run(resume_building_prompt)
+        resume_building_run = self.agent.run(resume_building_prompt)
 
         logger.info("Resume building complete")
         return resume_building_run.content
@@ -204,21 +213,21 @@ class ResumeBuilder:
             f"and extract the most relevant skills tailored to the role of a {self.role}. "
             "Format the skills section in a way that is most appropriate and impactful for the given role. "
             "Limit the output to a maximum of three categories of skills, with each category containing up to five skills only. "
-            "Do not include any extra text or explanations, only output the formatted skills.\n\n"
+            "Do not include any extra text or explanations, only output the formatted skills in markdown format.\n\n"
             "The format of the output should be relevant to the given role. For example:\n\n"
-            "- For technical roles like Software Engineer: \n"
-            "  Programming Languages: Python, Java, C++, JavaScript, SQL\n"
-            "  Frameworks: Django, Flask, React, Angular, Spring\n"
-            "  Tools: Docker, Kubernetes, Git, Jenkins, VS Code\n\n"
-            "- For consulting roles:\n"
-            "  Analytical Skills: Data Analysis, Problem Solving, Market Research, Business Modeling, Risk Assessment\n"
-            "  Industry Expertise: Healthcare, Finance, Technology\n"
-            "  Tools & Techniques: Tableau, Excel, PowerPoint, SQL, SAP\n\n"
+            "- **For technical roles like Software Engineer:** \n"
+            "  - **Programming Languages:** Python, Java, C++, JavaScript, SQL\n"
+            "  - **Frameworks:** Django, Flask, React, Angular, Spring\n"
+            "  - **Tools:** Docker, Kubernetes, Git, Jenkins, VS Code\n\n"
+            "- **For consulting roles:**\n"
+            "  - **Analytical Skills:** Data Analysis, Problem Solving, Market Research, Business Modeling, Risk Assessment\n"
+            "  - **Industry Expertise:** Healthcare, Finance, Technology\n"
+            "  - **Tools & Techniques:** Tableau, Excel, PowerPoint, SQL, SAP\n\n"
             f"The project data is:\n{formatted_output}\n\n"
-            f"Based on the role '{self.role}', format the skills section appropriately and only provide the skills in plain text."
+            f"Based on the role '{self.role}', format the skills section appropriately and only provide the skills in markdown format."
         )
 
-        skill_extraction_run = self.skillagent.run(skill_extraction_prompt)
+        skill_extraction_run = self.agent.run(skill_extraction_prompt)
         return skill_extraction_run.content
     
     def use_linked_in(self):
@@ -226,39 +235,39 @@ class ResumeBuilder:
             f"This is the LinkedIn information in JSON format: {self.profile}."
             "\n\nPlease structure the information in the following detailed format:"
             
-            "\n\nName: [Insert Full Name]"
+            "## [Insert Full Name]\n\n"
             
-            "\nExperiences:"
-            "\n1. Experience 1 Title (Company Name, Location):"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
+            "## Experiences:\n"
+            "1. **Experience 1 Title** (Company Name, Location):\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
             
-            "\n2. Experience 2 Title (Company Name, Location):"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
+            "2. **Experience 2 Title** (Company Name, Location):\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
             
-            "\n3. Experience 3 Title (Company Name, Location):"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
-            "\n   - [Detail about responsibility or achievement]"
+            "3. **Experience 3 Title** (Company Name, Location):\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
+            "   - [Detail about responsibility or achievement]\n"
             
-            "\nEducation:"
-            "\n1. Degree Title: Bachelor of Technology in Computer Science (or other degree)"
-            "\n   - Institution Name: [Insert Institution Name]"
-            "\n   - Start Date: [Format: 1st January 1998]"
-            "\n   - End Date: [Format: 31st December 2002]"
+            "## Education:\n"
+            "1. **Degree Title:** Bachelor of Technology in Computer Science (or other degree)\n"
+            "   - **Institution Name:** [Insert Institution Name]\n"
+            "   - **Start Date:** [Format: 1st January 1998]\n"
+            "   - **End Date:** [Format: 31st December 2002]\n"
             
-            "\n2. Degree Title: Master of Science in Data Science (or other degree)"
-            "\n   - Institution Name: [Insert Institution Name]"
-            "\n   - Start Date: [Format: 1st January 2004]"
-            "\n   - End Date: [Format: 31st December 2006]"
+            "2. **Degree Title:** Master of Science in Data Science (or other degree)\n"
+            "   - **Institution Name:** [Insert Institution Name]\n"
+            "   - **Start Date:** [Format: 1st January 2004]\n"
+            "   - **End Date:** [Format: 31st December 2006]\n"
 
             "\n\nNote: Ensure that all sections are filled out completely and accurately. Convert degree titles to their full forms (e.g., 'B.Tech in CS' becomes 'Bachelor of Technology in Computer Science'). Format dates as '1st January 1998' for clarity and aesthetic appeal."
         )
 
-        run: RunResponse = self.linkinagent.run(prompt)     
+        run: RunResponse = self.agent.run(prompt)     
         return run.content
     
     def build(self):
@@ -268,18 +277,14 @@ class ResumeBuilder:
         self.fetch_linkedin_profile()
         linked_in = self.use_linked_in()
 
-        projects = to_json(resume_result)
-        rest = to_json(skills_result + linked_in)
-
-        print(projects)
-        print(rest)
+        return resume_result, skills_result, linked_in
         
 
-def main():
-    linkedin_profile_url = 'https://www.linkedin.com/in/vishruth-srivatsa-b56638286/'
-    role_input = 'Data Scientist'
-    resume_builder = ResumeBuilder(['marcdhi/Lexify', 'suyash101101/AIgentX'], linkedin_profile_url, role_input)
-    resume_builder.build()
+# def main():
+#     linkedin_profile_url = 'https://www.linkedin.com/in/vishruth-srivatsa-b56638286/'
+#     role_input = 'Data Scientist'
+#     resume_builder = ResumeBuilder(['marcdhi/Lexify', 'suyash101101/AIgentX'], linkedin_profile_url, role_input)
+#     resume_builder.build()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

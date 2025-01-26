@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import random
 from typing import Dict, List
+import PyPDF2
 import os
 from phi.agent import Agent, RunResponse
 from phi.model.google import Gemini
@@ -9,6 +10,7 @@ from phi.storage.agent.sqlite import SqlAgentStorage
 from dotenv import load_dotenv
 from streamlit import session_state
 from Agents.QuestionGenerator import QuestionGenerator
+from Agents.ResumeBuilder import ResumeBuilder
 
 load_dotenv()
 
@@ -35,6 +37,16 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+def to_json(data_string):  
+    json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
+    return json.dumps(json_data, indent=4)
+
+def extract_text_from_pdf(pdf_content):
+    """Extract text from a PDF file content."""
+    reader = PyPDF2.PdfReader(pdf_content)
+    text = ''.join([page.extract_text() for page in reader.pages])
+    return text
 
 class QuestionSelector:
     def __init__(self):
@@ -166,10 +178,10 @@ def select_and_initialize_next_question():
     else:
         st.session_state.current_question = None
 
-def generate_questions(role, company):
+def generate_questions(role, company, resume_content):
     """Generate questions based on the resume, role, and company."""
     builder = QuestionGenerator(
-        "data/resume.pdf",
+        resume_content,
         role,
         company
     )
@@ -206,131 +218,194 @@ def generate_questions(role, company):
         situational_questions[0]
     )
 
+def display_resume_data(resume_result, skills_result, linked_in):
+    """Display the resume data in markdown format."""
+    # Display the concatenated resume string in the frontend
+    st.markdown(linked_in)
+    st.markdown("## Skills")
+    st.markdown(skills_result)
+    st.markdown(resume_result)  # Display the concatenated string as markdown
+
 def main():
     # Initialize session state variables if they don't exist
+    if 'page' not in st.session_state:
+        st.session_state.page = 'home'
     if 'questions_generated' not in st.session_state:
         st.session_state.questions_generated = False
     if 'current_question' not in st.session_state:
         st.session_state.current_question = None
     if 'question_selector' not in st.session_state:
         st.session_state.question_selector = QuestionSelector()
-    
+
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
         st.title("🤖 AI Interview System")
         st.markdown("---")
-        
-        # New UI for role and company input
-        st.header("Generate Questions")
-        role = st.text_input("Enter the role you are applying for:")
-        company = st.text_input("Enter the company you are applying to:")
-        
-        if st.button("Generate Questions"):
-            if role and company:
-                generate_questions(role, company)
-                st.session_state.questions_generated = True  # Track that questions have been generated
-                st.success("Questions generated successfully! You can now start the interview.")
-                select_and_initialize_next_question()  # Start the interview
-            else:
-                st.error("Please enter both role and company.")
 
-    # Check if questions have been generated before allowing the interview to start
-    if st.session_state.questions_generated:
-        if st.session_state.current_question is None:
-            select_and_initialize_next_question()
-    else:
-        st.warning("Please generate questions to start the interview.")
-    
-    # Sidebar with statistics
-    with st.sidebar:
-        st.header("Interview Progress")
-        total_questions = len(load_questions())
-        answered_questions = len(st.session_state.question_selector.asked_questions)
-        correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
-        
-        st.metric("Questions Answered", f"{answered_questions}/{total_questions}")
-        st.metric("Correct Answers", correct_answers)
-        
-        st.markdown("---")
-        st.markdown("### Categories Completed")
-        categories_seen = set()
-        for q_id in st.session_state.question_selector.asked_questions:
-            question = next((q for q in load_questions() if q['id'] == q_id), None)
-            if question:
-                categories_seen.add(question['category'])
-        for category in categories_seen:
-            st.markdown(f"- {category}")
-    
-    if st.session_state.current_question:
-        st.markdown("### Current Question:")
-        st.info(st.session_state.current_question['question'])
-        st.markdown("---")
-        
-        # Chat interface
-        if 'messages' not in st.session_state:
-            st.session_state.messages = []
+        # Home page with two buttons
+        if st.session_state.page == 'home':
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📝 Build Resume", use_container_width=True):
+                    st.session_state.page = 'resume'
+            with col2:
+                if st.button("🎯 Start Interview", use_container_width=True):
+                    st.session_state.page = 'interview'
 
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        if prompt := st.chat_input("Type your answer here..."):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
-
-            with st.spinner("Evaluating your answer..."):
-                response: RunResponse = st.session_state.agent.run(prompt)
-            st.session_state.messages.append({"role": "assistant", "content": response.content})
-            with st.chat_message("assistant"):
-                st.markdown(response.content)
+        # Resume builder page
+        elif st.session_state.page == 'resume':
+            st.header("Resume Builder")
             
-            # Check if the response indicates end of current question
-            if response.content.strip().lower() == "correct":
-                st.session_state.question_selector.record_result(
-                    st.session_state.current_question['id'], "correct"
-                )
-                st.balloons()
-                st.success("🎉 Correct answer!")
-                select_and_initialize_next_question()
+            linkedin_url = st.text_input("Enter your LinkedIn profile URL:")
+            role = st.text_input("Enter the role you're targeting:")
+            
+            # Multiple GitHub repos input
+            st.markdown("### GitHub Repositories")
+            st.markdown("Enter the repositories in format: username/repository")
+            
+            if 'num_repos' not in st.session_state:
+                st.session_state.num_repos = 1
+            
+            repos = []
+            for i in range(st.session_state.num_repos):
+                repo = st.text_input(f"Repository {i+1}", key=f"repo_{i}")
+                if repo:
+                    repos.append(repo)
+            
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                if st.button("Add Repo"):
+                    st.session_state.num_repos += 1
+                    st.rerun()
+            
+            if st.button("Generate Resume"):
+                if linkedin_url and role and repos:
+                    with st.spinner("Building your resume..."):
+                        resume_builder = ResumeBuilder(repos, linkedin_url, role)
+                        resume_result, skills_result, linked_in = resume_builder.build()
+                        print(resume_result)
+                        print(skills_result)
+                        print(linked_in)
+                        display_resume_data(resume_result, skills_result, linked_in)
+                        st.success("Resume generated successfully!")
+                else:
+                    st.error("Please fill in all fields")
+            
+            if st.button("Back to Home"):
+                st.session_state.page = 'home'
                 st.rerun()
-            elif "wrong" in response.content.lower():
-                st.session_state.question_selector.record_result(
-                    st.session_state.current_question['id'], "wrong"
-                )
-                st.error("❌ Incorrect answer.")
-                select_and_initialize_next_question()
+
+        # Interview page
+        elif st.session_state.page == 'interview':
+            st.header("Generate Interview Questions")
+            role = st.text_input("Enter the role you are applying for:")
+            company = st.text_input("Enter the company you are applying to:")
+            resume_file = st.file_uploader("Upload your resume (PDF format):", type=["pdf"])
+            
+            if st.button("Generate Questions"):
+                if role and company and resume_file:
+                    resume_content = extract_text_from_pdf(resume_file)
+                    generate_questions(role, company, resume_content)
+                    st.session_state.questions_generated = True
+                    st.success("Questions generated successfully! You can now start the interview.")
+                    select_and_initialize_next_question()
+                else:
+                    st.error("Please enter role, company, and upload your resume.")
+            
+            if st.button("Back to Home"):
+                st.session_state.page = 'home'
                 st.rerun()
-    else:
-        st.markdown("## 🎓 Interview Completed!")
-        st.markdown("You have completed all available questions. Here's your performance summary:")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            total_questions = len(load_questions())
-            answered_questions = len(st.session_state.question_selector.asked_questions)
-            correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
+
+            # Sidebar with statistics
+            with st.sidebar:
+                st.header("Interview Progress")
+                total_questions = len(load_questions())
+                answered_questions = len(st.session_state.question_selector.asked_questions)
+                correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
+                
+                st.metric("Questions Answered", f"{answered_questions}/{total_questions}")
+                st.metric("Correct Answers", correct_answers)
+                
+                st.markdown("---")
+                st.markdown("### Categories Completed")
+                categories_seen = set()
+                for q_id in st.session_state.question_selector.asked_questions:
+                    question = next((q for q in load_questions() if q['id'] == q_id), None)
+                    if question:
+                        categories_seen.add(question['category'])
+                for category in categories_seen:
+                    st.markdown(f"- {category}")
             
-            st.metric("Total Questions Attempted", answered_questions)
-            st.metric("Correct Answers", correct_answers)
-        
-        with col2:
-            st.markdown("### Performance by Category")
-            categories = {}
-            for q_id, result in st.session_state.question_selector.asked_questions.items():
-                question = next((q for q in load_questions() if q['id'] == q_id), None)
-                if question:
-                    category = question['category']
-                    if category not in categories:
-                        categories[category] = {"correct": 0, "total": 0}
-                    categories[category]["total"] += 1
-                    if result == "correct":
-                        categories[category]["correct"] += 1
+            if st.session_state.current_question:
+                st.markdown("### Current Question:")
+                st.info(st.session_state.current_question['question'])
+                st.markdown("---")
+                
+                # Chat interface
+                if 'messages' not in st.session_state:
+                    st.session_state.messages = []
+
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+
+                if prompt := st.chat_input("Type your answer here..."):
+                    st.session_state.messages.append({"role": "user", "content": prompt})
+                    with st.chat_message("user"):
+                        st.markdown(prompt)
+
+                    with st.spinner("Evaluating your answer..."):
+                        response: RunResponse = st.session_state.agent.run(prompt)
+                    st.session_state.messages.append({"role": "assistant", "content": response.content})
+                    with st.chat_message("assistant"):
+                        st.markdown(response.content)
+                    
+                    # Check if the response indicates end of current question
+                    if response.content.strip().lower() == "correct":
+                        st.session_state.question_selector.record_result(
+                            st.session_state.current_question['id'], "correct"
+                        )
+                        st.balloons()
+                        st.success("🎉 Correct answer!")
+                        select_and_initialize_next_question()
+                        st.rerun()
+                    elif "wrong" in response.content.lower():
+                        st.session_state.question_selector.record_result(
+                            st.session_state.current_question['id'], "wrong"
+                        )
+                        st.error("❌ Incorrect answer.")
+                        select_and_initialize_next_question()
+                        st.rerun()
+        else:
+            st.markdown("## 🎓 Interview Completed!")
+            st.markdown("You have completed all available questions. Here's your performance summary:")
             
-            for category, stats in categories.items():
-                success_rate = (stats["correct"] / stats["total"]) * 100
-                st.markdown(f"- **{category}**: {success_rate:.1f}% ({stats['correct']}/{stats['total']})")
+            col1, col2 = st.columns(2)
+            with col1:
+                total_questions = len(load_questions())
+                answered_questions = len(st.session_state.question_selector.asked_questions)
+                correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
+                
+                st.metric("Total Questions Attempted", answered_questions)
+                st.metric("Correct Answers", correct_answers)
+            
+            with col2:
+                st.markdown("### Performance by Category")
+                categories = {}
+                for q_id, result in st.session_state.question_selector.asked_questions.items():
+                    question = next((q for q in load_questions() if q['id'] == q_id), None)
+                    if question:
+                        category = question['category']
+                        if category not in categories:
+                            categories[category] = {"correct": 0, "total": 0}
+                        categories[category]["total"] += 1
+                        if result == "correct":
+                            categories[category]["correct"] += 1
+                
+                for category, stats in categories.items():
+                    success_rate = (stats["correct"] / stats["total"]) * 100
+                    st.markdown(f"- **{category}**: {success_rate:.1f}% ({stats['correct']}/{stats['total']})")
 
 if __name__ == "__main__":
     main() 

@@ -25,13 +25,12 @@ def to_json(data_string):
     return json.dumps(json_data, indent=4)
 
 class QuestionGenerator:
-    def __init__(self, file_path, role, company):
+    def __init__(self, resume_content, role, company):
         """Initialize with resume content, role, and company."""
-        self.file_path = file_path
-        self.resume = self.extract_text_from_pdf(file_path)
+        self.resume = resume_content  # Extract text from the PDF content
         self.role = role
         self.company = company
-        self.agent1 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Question)
+        self.agent1 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model=Question)
         self.agent2 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")))
         with open('data/skills.json', 'r') as file:
             self.skill_guide = json.load(file)
@@ -85,12 +84,10 @@ class QuestionGenerator:
             ]
         }
 
-
-    def extract_text_from_pdf(self, file_path):
-        """Extract text from a PDF file."""
-        with open(file_path, 'rb') as pdf_file:
-            reader = PyPDF2.PdfReader(pdf_file)
-            text = ''.join([page.extract_text() for page in reader.pages])
+    def extract_text_from_pdf(self, pdf_content):
+        """Extract text from a PDF file content."""
+        reader = PyPDF2.PdfReader(pdf_content)
+        text = ''.join([page.extract_text() for page in reader.pages])
         return text
 
     def analyze_keywords(self):
@@ -183,17 +180,22 @@ class QuestionGenerator:
                     "5. *Practical Application Emphasis*: Frame questions to test the user's problem-solving abilities, hands-on experience, and practical application of concepts, especially for technical and functional skills."
                     "6. *Avoid Generic Questions*: Ensure each question is uniquely tailored, leveraging subtopics to reflect the specific requirements of the target role and company."
                     "7. *Structured Format*: The output should follow this structured format:"
-                    "   (Name of the applicant)   "
-                    "   Project Based Questions:"
-                    "   1. [Medium-level question using a moderately detailed subtopic]"
-                    "   2. [Medium-level question using another moderately detailed subtopic]"
-                    "   3. [Highly specific and niche question on a critical subtopic]"
+                    "   questions:(Should not be anything else. It should be questions only)"
+                    "   1. question: [Highly specific and niche question on a critical subtopic]"
+                    "   expected_approach: [Expected approach to solve the problem]"
+                    "   criteria: [Criteria to judge the answer]"
+                    "   2. question: [Highly specific and niche question on a critical subtopic]"
+                    "   expected_approach: [Expected approach to solve the problem]"
+                    "   criteria: [Criteria to judge the answer]"
+                    "   3. question: [Highly specific and niche question on a critical subtopic]"
+                    "   expected_approach: [Expected approach to solve the problem]"
+                    "   criteria: [Criteria to judge the answer]"
                     "   ..."
-                    "   10. [Highly specific and niche question on another critical subtopic]"
+                    "   5. question: [Highly specific and niche question on another critical subtopic]"
+                    "   expected_approach: [Expected approach to solve the problem]"
+                    "   criteria: [Criteria to judge the answer]"
                     "8. Make sure it should follow given format and no unnecessary text should be present."
                     "9. Only 5 questions should be generated"
-                    "10.Ensure all questions are logically sequenced, focus mainly on technical and functional skills, and are aligned with the depth required to evaluate the user's fit for the role and company."
-                    "11.After each question generated, give a detailed expected approach, the user has to take while answering the question and the criteria required to fulfill it. "
                 )
 
         run: RunResponse = self.agent1.run(prompt)
@@ -222,11 +224,17 @@ class QuestionGenerator:
                     "   - Provide exactly 3 questions, numbered and clearly phrased."
                     "   - Each question should explicitly mention the sub-concept(s) being addressed."
                     "   - Example format:"
-                    "     Theoretical Questions:"
-                    "     1. [Explain how sub-concept A influences sub-concept B.]"
-                    "     2. [What is the role of sub-concept C in achieving goal D?]"
+                    "     questions:"
+                    "     1. question: [Explain how sub-concept A influences sub-concept B.]"
+                    "     expected_approach: [Expected approach to solve the problem]"
+                    "     criteria: [Criteria to judge the answer]"
+                    "     2. question: [What is the role of sub-concept C in achieving goal D?]"
+                    "     expected_approach: [Expected approach to solve the problem]"
+                    "     criteria: [Criteria to judge the answer]"
                     "     ..."
-                    "     5. [Describe the relationship between sub-concepts Y and Z.]"
+                    "     5. question: [Describe the relationship between sub-concepts Y and Z.]"
+                    "     expected_approach: [Expected approach to solve the problem]"
+                    "     criteria: [Criteria to judge the answer]"
                     "6. *Example Questions:*"
                     "   - For sub-concepts 'Machine Learning' and 'Data Quality,' a question might be:"
                     "     'Explain how the quality of data affects the performance of machine learning models.'"
@@ -244,24 +252,31 @@ class QuestionGenerator:
     def generate_skill_questions(self):
         """Generate interview questions based on the skills."""
         prompt = (
-                            f"Assume you are an experienced interviewer representing the company '{self.company}'. "
-                            f"You are conducting an interview for a candidate applying for the role of '{self.role}'. "
-                            f"The skill analysis of the candidate's resume has identified the following: {self.skill_analysis}. "
-                            f"You also have access to a guide that outlines example topics and corresponding question formats in '{self.skill_guide}'. "
-                            f"Your task is as follows: "
-                            f"1. Identify all technical skills mentioned in the skill analysis that are relevant to the requirements of the company, regardless of whether the applicant possesses them or not. "
-                            f"2. Using these identified technical skills, generate 10 well-structured and thoughtful technical questions. "
-                            f"3. The questions should align with the style, depth, and structure of the example questions provided in the guide, while covering diverse aspects of the relevant concepts. "
-                            f"4. Ensure the questions are tailored to the specific requirements of the role and exclude any focus on soft skills. "
-                            f"5. Each question should probe different dimensions of the technical skills required for the role."
-                            f"6. The format followed should be:"
-                            f"    Skill based Questions:"
-                            f"    1."
-                            f"    2'"
-                            f"    ...."
-                            f"    10."
-                            f"7. Make sure it should follow given format and no unnecessary text should be present."
-                            f"8.After each question generated, give a detailed expected approach, the user has to take while answering the question and the criteria required to fulfill it."
+            f"Assume you are an experienced interviewer representing the company '{self.company}'. "
+            f"You are conducting an interview for a candidate applying for the role of '{self.role}'. "
+            f"The skill analysis of the candidate's resume has identified the following: {self.skill_analysis}. "
+            f"You also have access to a guide that outlines example topics and corresponding question formats in '{self.skill_guide}'. "
+            f"Your task is as follows: "
+            f"1. Identify all technical skills mentioned in the skill analysis that are relevant to the requirements of the company, regardless of whether the applicant possesses them or not. "
+            f"2. Using these identified technical skills, generate 10 well-structured and thoughtful technical questions. "
+            f"3. The questions should align with the style, depth, and structure of the example questions provided in the guide, while covering diverse aspects of the relevant concepts. "
+            f"4. Ensure the questions are tailored to the specific requirements of the role and exclude any focus on soft skills. "
+            f"5. Each question should probe different dimensions of the technical skills required for the role."
+            f"6. The format followed should be:"
+            f"    questions:"
+            f"    1. question: [question]"
+            f"     expected_approach: [Expected approach to solve the problem]"
+            f"     criteria: [Criteria to judge the answer]"
+            f"    2. question: [question]"
+            f"     expected_approach: [Expected approach to solve the problem]"
+            f"     criteria: [Criteria to judge the answer]"
+            f"    ...."
+            f"    10. question: [question]"
+            f"     expected_approach: [Expected approach to solve the problem]"
+            f"     criteria: [Criteria to judge the answer]"
+            f"7. Make sure it should follow given format and no unnecessary text should be present."
+            f"8.After each question generated, give a detailed expected approach, the user has to take while answering the question and the criteria required to fulfill it."
+            f"9.Only 10 questions should be generated"
         )
 
         run: RunResponse = self.agent1.run(prompt)
@@ -298,11 +313,17 @@ class QuestionGenerator:
                     f"   - Define any necessary context within the question to avoid misinterpretation. "
                     f"   - Use professional and neutral phrasing to maintain a formal interview tone. "
                     f" The format followed should be:"
-                    f"    Situational Questions:"
-                    f"    1."
-                    f"    2'"
+                    f"    questions:"
+                    f"    1. question: [question]"
+                    f"     expected_approach: [Expected approach to solve the problem]"
+                    f"     criteria: [Criteria to judge the answer]"
+                    f"    2. question: [question]"
+                    f"     expected_approach: [Expected approach to solve the problem]"
+                    f"     criteria: [Criteria to judge the answer]"
                     f"    ...."
-                    f"    10."
+                    f"    10. question: [question]"
+                    f"     expected_approach: [Expected approach to solve the problem]"
+                    f"     criteria: [Criteria to judge the answer]"
                     f"The output should have only 2 questions "
                     f" Make sure it should follow given format and no unnecessary text should be present."
                     f"After each question generated, give a detailed expected approach, the user has to take while answering the question and the criteria required to fulfill it."
@@ -329,6 +350,8 @@ class QuestionGenerator:
                     questions = data[0]["interview_questions"]
                 elif "questions" in data[0]:
                     questions = data[0]["questions"]
+                elif "question" in data[0]:
+                    questions = data[0]["question"]
             else:
                 questions = data
 
@@ -344,7 +367,7 @@ class QuestionGenerator:
                 question_id += 1
 
         # Process each type of question
-        process_questions(to_json(interview_questions), "Project Based")
+        # process_questions(to_json(interview_questions), "Project Based")
         process_questions(to_json(theoretical_questions), "Theoretical")
         process_questions(to_json(skill_questions), "Technical Skills")
         process_questions(to_json(situational_questions), "Situational")
