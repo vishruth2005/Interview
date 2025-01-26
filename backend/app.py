@@ -7,6 +7,8 @@ from phi.agent import Agent, RunResponse
 from phi.model.google import Gemini
 from phi.storage.agent.sqlite import SqlAgentStorage
 from dotenv import load_dotenv
+from streamlit import session_state
+from Agents.QuestionGenerator import QuestionGenerator
 
 load_dotenv()
 
@@ -164,18 +166,81 @@ def select_and_initialize_next_question():
     else:
         st.session_state.current_question = None
 
+def generate_questions(role, company):
+    """Generate questions based on the resume, role, and company."""
+    builder = QuestionGenerator(
+        "data/resume.pdf",
+        role,
+        company
+    )
+    
+    # Generate interview questions in batches
+    interview_questions = []
+    for _ in range(2):  # Adjust the range for the number of batches you want
+        questions = builder.generate_interview_questions()
+        interview_questions.append(questions)
+
+    # Generate theoretical questions in batches
+    theoretical_questions = []
+    for _ in range(2):  # Adjust the range for the number of batches you want
+        theory_questions = builder.generate_theoretical_interview_questions()
+        theoretical_questions.append(theory_questions)
+
+    # Generate skill questions in batches
+    skill_questions = []
+    for _ in range(2):  # Adjust the range for the number of batches you want
+        skill_qs = builder.generate_skill_questions()
+        skill_questions.append(skill_qs)
+
+    # Generate situational questions in batches
+    situational_questions = []
+    for _ in range(2):  # Adjust the range for the number of batches you want
+        situation_qs = builder.Generate_Situations()
+        situational_questions.append(situation_qs)
+
+    # Save all questions to questions.json
+    builder.save_questions_to_json(
+        interview_questions[0],
+        theoretical_questions[0],
+        skill_questions[0],
+        situational_questions[0]
+    )
+
 def main():
+    # Initialize session state variables if they don't exist
+    if 'questions_generated' not in st.session_state:
+        st.session_state.questions_generated = False
+    if 'current_question' not in st.session_state:
+        st.session_state.current_question = None
+    if 'question_selector' not in st.session_state:
+        st.session_state.question_selector = QuestionSelector()
+    
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
         st.title("🤖 AI Interview System")
         st.markdown("---")
-    
-    if 'question_selector' not in st.session_state:
-        st.session_state.question_selector = QuestionSelector()
-    
-    if 'current_question' not in st.session_state:
-        select_and_initialize_next_question()
+        
+        # New UI for role and company input
+        st.header("Generate Questions")
+        role = st.text_input("Enter the role you are applying for:")
+        company = st.text_input("Enter the company you are applying to:")
+        
+        if st.button("Generate Questions"):
+            if role and company:
+                generate_questions(role, company)
+                st.session_state.questions_generated = True  # Track that questions have been generated
+                st.success("Questions generated successfully! You can now start the interview.")
+                select_and_initialize_next_question()  # Start the interview
+            else:
+                st.error("Please enter both role and company.")
+
+    # Check if questions have been generated before allowing the interview to start
+    if st.session_state.questions_generated:
+        if st.session_state.current_question is None:
+            select_and_initialize_next_question()
+    else:
+        st.warning("Please generate questions to start the interview.")
     
     # Sidebar with statistics
     with st.sidebar:
@@ -186,8 +251,6 @@ def main():
         
         st.metric("Questions Answered", f"{answered_questions}/{total_questions}")
         st.metric("Correct Answers", correct_answers)
-        if answered_questions > 0:
-            st.metric("Success Rate", f"{(correct_answers/answered_questions)*100:.1f}%")
         
         st.markdown("---")
         st.markdown("### Categories Completed")
@@ -251,7 +314,6 @@ def main():
             
             st.metric("Total Questions Attempted", answered_questions)
             st.metric("Correct Answers", correct_answers)
-            st.metric("Success Rate", f"{(correct_answers/answered_questions)*100:.1f}%")
         
         with col2:
             st.markdown("### Performance by Category")

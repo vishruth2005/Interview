@@ -19,6 +19,8 @@ class Question(BaseModel):
     criteria: str = Field(..., description="The criteria to judge the answer for the question should be inserted here.")
 
 def to_json(data_string):  
+    # Debugging statement to check the input string
+    print("Debug: Raw data_string before processing:", data_string)  # Add this line for debugging
     json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
     return json.dumps(json_data, indent=4)
 
@@ -31,22 +33,22 @@ class QuestionGenerator:
         self.company = company
         self.agent1 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Question)
         self.agent2 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")))
-        with open('backend/data/skills.json', 'r') as file:
+        with open('data/skills.json', 'r') as file:
             self.skill_guide = json.load(file)
         self.situation_guide = {
             "collaboration": [
                 "Tell me about a time when you had to work closely with someone whose personality was very different from yours.",
                 "Give me an example of a time you faced a conflict with a coworker. How did you handle that?",
                 "Describe a time when you had to step up and demonstrate leadership skills.",
-                "Tell me about a time you made a mistake and wish you’d handled a situation with a colleague differently.",
-                "Tell me about a time you needed to get information from someone who wasn’t very responsive. What did you do?"
+                "Tell me about a time you made a mistake and wish you'd handled a situation with a colleague differently.",
+                "Tell me about a time you needed to get information from someone who wasn't very responsive. What did you do?"
             ],
             "client_focus": [
                 "Describe a time when it was especially important to make a good impression on a client. How did you go about doing so?",
-                "Give me an example of a time when you didn’t meet a client’s expectation. What happened, and how did you attempt to rectify the situation?",
+                "Give me an example of a time when you didn't meet a client's expectation. What happened, and how did you attempt to rectify the situation?",
                 "Tell me about a time when you made sure a customer was pleased with your service.",
                 "Describe a time when you had to interact with a difficult client or customer. What was the situation, and how did you handle it?",
-                "When you’re working with a large number of customers, it’s tricky to deliver excellent service to them all. How do you go about prioritizing your customers’ needs?"
+                "When you're working with a large number of customers, it's tricky to deliver excellent service to them all. How do you go about prioritizing your customers' needs?"
             ],
             "stress_and_adaptability": [
                 "Tell me about a time you were under a lot of pressure at work or at school. What was going on, and how did you get through it?",
@@ -288,9 +290,9 @@ class QuestionGenerator:
                     f"\n\n4. Avoid Explicit Labels: "
                     f"   - Do not explicitly label or identify which questions are experience-based and which are not. Ensure they flow naturally within the set. "
                     f"\n\n5. Edge Case Handling: "
-                    f"   - Ensure all questions remain relevant to the role, even if the candidate’s resume lacks detailed information or explicitly stated soft skills. Use general industry standards and context as a fallback. "
+                    f"   - Ensure all questions remain relevant to the role, even if the candidate's resume lacks detailed information or explicitly stated soft skills. Use general industry standards and context as a fallback. "
                     f"   - Avoid making assumptions about the candidate's prior experience beyond what is clearly stated in the resume. "
-                    f"   - Ensure the questions are appropriate for the role’s level (e.g., entry-level, mid-level, leadership) and do not introduce situations that are unrealistic for the position. "
+                    f"   - Ensure the questions are appropriate for the role's level (e.g., entry-level, mid-level, leadership) and do not introduce situations that are unrealistic for the position. "
                     f"\n\n6. Clarity and Precision: "
                     f"   - Make sure the language used in the questions is clear and unambiguous. "
                     f"   - Define any necessary context within the question to avoid misinterpretation. "
@@ -319,12 +321,14 @@ class QuestionGenerator:
             data = json.loads(questions_json)
             # Handle the nested structure
             if isinstance(data, list) and len(data) > 0:
-                if "interview_questions" in data[0]:
+                if "Skill based Questions" in data[0]:
+                    questions = data[0]["Skill based Questions"]
+                elif "Situational Questions" in data[0]:
+                    questions = data[0]["Situational Questions"]
+                elif "interview_questions" in data[0]:
                     questions = data[0]["interview_questions"]
                 elif "questions" in data[0]:
                     questions = data[0]["questions"]
-                else:
-                    questions = data
             else:
                 questions = data
 
@@ -346,44 +350,44 @@ class QuestionGenerator:
         process_questions(to_json(situational_questions), "Situational")
 
         # Save to questions.json
-        with open('backend/questions.json', 'w') as f:
+        with open('questions.json', 'w') as f:
             json.dump({"questions": all_questions}, f, indent=4)
 
-if __name__ == "__main__":
-    builder = QuestionGenerator(
-        "backend/data/resume.pdf",
-        "Associate",
-        "Boston Consulting Groups"
-    )
+# if __name__ == "__main__":
+#     builder = QuestionGenerator(
+#         "data/resume.pdf",
+#         "Associate",
+#         "Boston Consulting Groups"
+#     )
 
-    # Generate interview questions in batches
-    interview_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        questions = builder.generate_interview_questions()
-        interview_questions.append(questions)
+#     # Generate interview questions in batches
+#     interview_questions = []
+#     # for _ in range(2):  # Adjust the range for the number of batches you want
+#     #     questions = builder.generate_interview_questions()
+#     #     interview_questions.append(questions)
 
-    # Generate theoretical questions in batches
-    theoretical_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        theory_questions = builder.generate_theoretical_interview_questions()
-        theoretical_questions.append(theory_questions)
+#     # Generate theoretical questions in batches
+#     theoretical_questions = []
+#     # for _ in range(2):  # Adjust the range for the number of batches you want
+#     #     theory_questions = builder.generate_theoretical_interview_questions()
+#     #     theoretical_questions.append(theory_questions)
 
-    # Generate skill questions in batches
-    skill_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        skill_qs = builder.generate_skill_questions()
-        skill_questions.append(skill_qs)
+#     # Generate skill questions in batches
+#     skill_questions = []
+#     # for _ in range(2):  # Adjust the range for the number of batches you want
+#     #     skill_qs = builder.generate_skill_questions()
+#     #     skill_questions.append(skill_qs)
 
-    # Generate situational questions in batches
-    situational_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        situation_qs = builder.Generate_Situations()
-        situational_questions.append(situation_qs)
+#     # # Generate situational questions in batches
+#     situational_questions = []
+#     for _ in range(2):  # Adjust the range for the number of batches you want
+#         situation_qs = builder.Generate_Situations()
+#         situational_questions.append(situation_qs)
 
-    # Save all questions to questions.json
-    builder.save_questions_to_json(
-        interview_questions[0],
-        theoretical_questions[0],
-        skill_questions[0],
-        situational_questions[0]
-    )
+#     # Save all questions to questions.json
+#     builder.save_questions_to_json(
+#         interview_questions,
+#         theoretical_questions,
+#         skill_questions,
+#         situational_questions[0]
+#     )
