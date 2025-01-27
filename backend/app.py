@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from streamlit import session_state
 from Agents.QuestionGenerator import QuestionGenerator
 from Agents.ResumeBuilder import ResumeBuilder
+import time
 
 load_dotenv()
 
@@ -161,6 +162,7 @@ def load_questions():
         return []
 
 def select_and_initialize_next_question():
+    """Select and initialize the next question."""
     questions = load_questions()
     question_categories = {q['id']: q['category'] for q in questions}
     next_question = st.session_state.question_selector.select_next_question(
@@ -174,9 +176,10 @@ def select_and_initialize_next_question():
             next_question['template'],
             next_question['criteria']
         )
-        st.session_state.messages = []
+        return next_question
     else:
         st.session_state.current_question = None
+        return None
 
 def generate_questions(role, company, resume_content):
     """Generate questions based on the resume, role, and company."""
@@ -236,6 +239,20 @@ def main():
         st.session_state.current_question = None
     if 'question_selector' not in st.session_state:
         st.session_state.question_selector = QuestionSelector()
+    if 'interview_started' not in st.session_state:
+        st.session_state.interview_started = False
+    if 'transition_message' not in st.session_state:
+        st.session_state.transition_message = None
+    if 'preparing_interview' not in st.session_state:
+        st.session_state.preparing_interview = False
+    if 'interview_ready' not in st.session_state:
+        st.session_state.interview_ready = False
+    if 'form_data' not in st.session_state:
+        st.session_state.form_data = {
+            'role': None,
+            'company': None,
+            'resume_file': None
+        }
 
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -298,85 +315,277 @@ def main():
 
         # Interview page
         elif st.session_state.page == 'interview':
-            st.header("Generate Interview Questions")
-            role = st.text_input("Enter the role you are applying for:")
-            company = st.text_input("Enter the company you are applying to:")
-            resume_file = st.file_uploader("Upload your resume (PDF format):", type=["pdf"])
-            
-            if st.button("Generate Questions"):
-                if role and company and resume_file:
-                    resume_content = extract_text_from_pdf(resume_file)
-                    generate_questions(role, company, resume_content)
+            if not st.session_state.interview_ready:
+                st.header("Generate Interview Questions")
+                role = st.text_input("Enter the role you are applying for:")
+                company = st.text_input("Enter the company you are applying to:")
+                resume_file = st.file_uploader("Upload your resume (PDF format):", type=["pdf"])
+                
+                if st.button("Generate Questions"):
+                    if role and company and resume_file:
+                        # Store form data in session state
+                        st.session_state.form_data = {
+                            'role': role,
+                            'company': company,
+                            'resume_file': resume_file
+                        }
+                        st.session_state.preparing_interview = True
+                        st.session_state.interview_ready = True
+                        st.rerun()
+                    else:
+                        st.error("Please enter role, company, and upload your resume.")
+                
+                if st.button("Back to Home"):
+                    st.session_state.page = 'home'
+                    st.rerun()
+
+            elif st.session_state.preparing_interview:
+                st.empty()  # Clear previous content
+                col1, col2, col3 = st.columns([2, 3, 2])
+                with col2:
+                    st.markdown("""
+                        <div style='text-align: center; padding: 50px 0;'>
+                            <h2>🎯 Preparing Your Customized Interview</h2>
+                            <p style='font-size: 18px;'>Please wait while we analyze your resume and prepare relevant questions...</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Show a progress animation
+                    progress_placeholder = st.empty()
+                    progress_bar = progress_placeholder.progress(0)
+                    for i in range(100):
+                        progress_bar.progress(i + 1)
+                        time.sleep(0.01)
+                    
+                    # Generate questions after progress bar using stored form data
+                    resume_content = extract_text_from_pdf(st.session_state.form_data['resume_file'])
+                    generate_questions(
+                        st.session_state.form_data['role'],
+                        st.session_state.form_data['company'],
+                        resume_content
+                    )
                     st.session_state.questions_generated = True
-                    st.success("Questions generated successfully! You can now start the interview.")
+                    st.session_state.interview_started = False
+                    st.session_state.preparing_interview = False
                     select_and_initialize_next_question()
-                else:
-                    st.error("Please enter role, company, and upload your resume.")
+                    st.rerun()
+
+            else:
+                # Interview in progress
+                if st.session_state.current_question:
+                    # Container for all content except chat input
+                    content_container = st.container()
+                    
+                    # Exit button in the top right
+                    col1, col2, col3 = st.columns([6, 1, 1])
+                    with col3:
+                        if st.button("Exit Interview", type="secondary"):
+                            st.session_state.page = 'report'
+                            st.rerun()
+                    
+                    with content_container:
+                        if not st.session_state.interview_started:
+                            st.markdown("""
+                            ### Welcome to your AI Interview! 👋
+                            
+                            I'm here to have a conversation with you about your experience and skills. Don't worry - this is meant to be 
+                            a comfortable discussion where you can showcase your expertise. Take your time with your answers, and feel free 
+                            to ask for clarification if needed.
+                            
+                            Let's start with our first question...
+                            """)
+                            st.session_state.interview_started = True
+                            # Initialize messages list if first time
+                            if 'messages' not in st.session_state:
+                                st.session_state.messages = []
+                        
+                        if st.session_state.transition_message:
+                            st.markdown(st.session_state.transition_message)
+                            st.session_state.transition_message = None
+                        
+                        st.markdown("### Question:")
+                        st.info(st.session_state.current_question['question'])
+                        st.markdown("---")
+                        
+                        # Display chat history from session state
+                        for message in st.session_state.messages:
+                            with st.chat_message(message["role"]):
+                                st.markdown(message["content"])
+                    
+                    # Chat input at the bottom
+                    if prompt := st.chat_input("Type your answer here..."):
+                        st.session_state.messages.append({"role": "user", "content": prompt})
+                        with content_container.chat_message("user"):
+                            st.markdown(prompt)
+
+                        with st.spinner("Evaluating your answer..."):
+                            response: RunResponse = st.session_state.agent.run(prompt)
+                        
+                        # Only append and show the response if it's not "correct" or "wrong"
+                        if response.content.strip().lower() not in ["correct", "wrong"]:
+                            st.session_state.messages.append({"role": "assistant", "content": response.content})
+                            with content_container.chat_message("assistant"):
+                                st.markdown(response.content)
+                        
+                        # Handle the state changes without showing correct/wrong
+                        if response.content.strip().lower() == "correct":
+                            st.session_state.question_selector.record_result(
+                                st.session_state.current_question['id'], "correct"
+                            )
+                            st.balloons()
+                            transition_messages = [
+                                "Great answer! Let's move on to another interesting topic...",
+                                "Excellent! Now, I'd like to explore a different area with you...",
+                                "Well explained! Let's shift our discussion to another aspect...",
+                                "Very good! Moving on to our next topic of discussion...",
+                                "That's exactly what we were looking for! Let's continue our conversation with..."
+                            ]
+                            transition_msg = random.choice(transition_messages)
+                            st.session_state.messages.append({"role": "assistant", "content": transition_msg})
+                            
+                            # Add the next question to the chat
+                            next_question = select_and_initialize_next_question()
+                            if next_question:
+                                st.session_state.messages.append({
+                                    "role": "assistant", 
+                                    "content": f"### Next Question:\n{next_question['question']}"
+                                })
+                            st.rerun()
+                        elif "wrong" in response.content.lower():
+                            st.session_state.question_selector.record_result(
+                                st.session_state.current_question['id'], "wrong"
+                            )
+                            transition_messages = [
+                                "Thank you for your effort. Let's move on to a different topic...",
+                                "That's a challenging one. Let's explore another area...",
+                                "Let's shift our focus to another interesting topic...",
+                                "Moving on to our next discussion point..."
+                            ]
+                            transition_msg = random.choice(transition_messages)
+                            st.session_state.messages.append({"role": "assistant", "content": transition_msg})
+                            
+                            # Add the next question to the chat
+                            next_question = select_and_initialize_next_question()
+                            if next_question:
+                                st.session_state.messages.append({
+                                    "role": "assistant", 
+                                    "content": f"### Next Question:\n{next_question['question']}"
+                                })
+                            st.rerun()
+        elif st.session_state.page == 'report':
+            st.markdown("## 🎓 Interview Performance Report")
             
-            if st.button("Back to Home"):
+            # Get all chat history
+            chat_history = st.session_state.messages if 'messages' in st.session_state else []
+            
+            # Prepare data for analysis
+            total_questions = len(load_questions())
+            answered_questions = len(st.session_state.question_selector.asked_questions)
+            questions_by_category = {}
+            performance_by_category = {}
+            
+            for q_id, result in st.session_state.question_selector.asked_questions.items():
+                question = next((q for q in load_questions() if q['id'] == q_id), None)
+                if question:
+                    category = question['category']
+                    if category not in questions_by_category:
+                        questions_by_category[category] = {'total': 0, 'correct': 0}
+                    questions_by_category[category]['total'] += 1
+                    if result == 'correct':
+                        questions_by_category[category]['correct'] += 1
+            
+            # Generate qualitative analysis
+            qualitative_prompt = f"""
+            You are an expert interview assessor. Analyze this interview chat history and provide a comprehensive qualitative assessment.
+            Focus on:
+            1. Overall communication style and clarity
+            2. Technical depth and understanding
+            3. Specific strengths demonstrated
+            4. Areas for improvement
+            5. Notable responses or insights
+            
+            Chat history: {chat_history}
+            
+            Provide the analysis in a well-structured format with clear sections and bullet points.
+            Make it constructive and actionable.
+            """
+            
+            with st.spinner("Generating detailed interview analysis..."):
+                analysis_agent = Agent(
+                    model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+                    storage=SqlAgentStorage(table_name="analysis_sessions", db_file="tmp/analysis_storage.db")
+                )
+                analysis: RunResponse = analysis_agent.run(qualitative_prompt)
+            
+            # Display the report
+            col1, col2 = st.columns([3, 2])
+            
+            with col1:
+                st.markdown("### 📊 Qualitative Assessment")
+                st.markdown(analysis.content)
+            
+            with col2:
+                st.markdown("### 📈 Quantitative Metrics")
+                
+                # Overall progress
+                st.markdown("#### Overall Progress")
+                progress = answered_questions / total_questions if total_questions > 0 else 0
+                st.progress(progress)
+                st.markdown(f"**Questions Completed:** {answered_questions}/{total_questions}")
+                
+                # Category breakdown
+                st.markdown("#### Performance by Category")
+                for category, stats in questions_by_category.items():
+                    success_rate = (stats['correct'] / stats['total']) * 100 if stats['total'] > 0 else 0
+                    st.markdown(f"**{category}**")
+                    st.progress(success_rate / 100)
+                    st.markdown(f"Success Rate: {success_rate:.1f}% ({stats['correct']}/{stats['total']} questions)")
+                
+                # Topic coverage visualization
+                st.markdown("#### Topic Coverage")
+                import plotly.express as px
+                import pandas as pd
+                
+                # Prepare data for visualization
+                df_data = []
+                for category, stats in questions_by_category.items():
+                    df_data.append({
+                        'Category': category,
+                        'Questions Attempted': stats['total'],
+                        'Success Rate': (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
+                    })
+                
+                if df_data:
+                    df = pd.DataFrame(df_data)
+                    fig = px.scatter(df, x='Questions Attempted', y='Success Rate', 
+                                   size='Questions Attempted', color='Category',
+                                   title='Topic Coverage and Performance',
+                                   labels={'Success Rate': 'Success Rate (%)'})
+                    st.plotly_chart(fig, use_container_width=True)
+            
+            # Action items and next steps
+            st.markdown("### 🎯 Recommended Next Steps")
+            next_steps_prompt = f"""
+            Based on the interview performance and analysis above, provide 3-5 specific, actionable recommendations 
+            for improvement. Focus on concrete steps the candidate can take to enhance their skills and interview performance.
+            
+            Format the response as bullet points, with each recommendation being clear and actionable.
+            """
+            
+            with st.spinner("Generating recommendations..."):
+                recommendations: RunResponse = analysis_agent.run(next_steps_prompt)
+            
+            st.markdown(recommendations.content)
+            
+            # Return to home button
+            if st.button("Return to Home"):
+                # Reset session state for a new interview
+                for key in ['messages', 'current_question', 'question_selector', 'interview_started', 
+                           'transition_message', 'preparing_interview', 'interview_ready', 'form_data']:
+                    if key in st.session_state:
+                        del st.session_state[key]
                 st.session_state.page = 'home'
                 st.rerun()
-
-            # Sidebar with statistics
-            with st.sidebar:
-                st.header("Interview Progress")
-                total_questions = len(load_questions())
-                answered_questions = len(st.session_state.question_selector.asked_questions)
-                correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
-                
-                st.metric("Questions Answered", f"{answered_questions}/{total_questions}")
-                st.metric("Correct Answers", correct_answers)
-                
-                st.markdown("---")
-                st.markdown("### Categories Completed")
-                categories_seen = set()
-                for q_id in st.session_state.question_selector.asked_questions:
-                    question = next((q for q in load_questions() if q['id'] == q_id), None)
-                    if question:
-                        categories_seen.add(question['category'])
-                for category in categories_seen:
-                    st.markdown(f"- {category}")
-            
-            if st.session_state.current_question:
-                st.markdown("### Current Question:")
-                st.info(st.session_state.current_question['question'])
-                st.markdown("---")
-                
-                # Chat interface
-                if 'messages' not in st.session_state:
-                    st.session_state.messages = []
-
-                for message in st.session_state.messages:
-                    with st.chat_message(message["role"]):
-                        st.markdown(message["content"])
-
-                if prompt := st.chat_input("Type your answer here..."):
-                    st.session_state.messages.append({"role": "user", "content": prompt})
-                    with st.chat_message("user"):
-                        st.markdown(prompt)
-
-                    with st.spinner("Evaluating your answer..."):
-                        response: RunResponse = st.session_state.agent.run(prompt)
-                    st.session_state.messages.append({"role": "assistant", "content": response.content})
-                    with st.chat_message("assistant"):
-                        st.markdown(response.content)
-                    
-                    # Check if the response indicates end of current question
-                    if response.content.strip().lower() == "correct":
-                        st.session_state.question_selector.record_result(
-                            st.session_state.current_question['id'], "correct"
-                        )
-                        st.balloons()
-                        st.success("🎉 Correct answer!")
-                        select_and_initialize_next_question()
-                        st.rerun()
-                    elif "wrong" in response.content.lower():
-                        st.session_state.question_selector.record_result(
-                            st.session_state.current_question['id'], "wrong"
-                        )
-                        st.error("❌ Incorrect answer.")
-                        select_and_initialize_next_question()
-                        st.rerun()
         else:
             st.markdown("## 🎓 Interview Completed!")
             st.markdown("You have completed all available questions. Here's your performance summary:")
