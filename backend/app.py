@@ -12,6 +12,7 @@ from streamlit import session_state
 from Agents.QuestionGenerator import QuestionGenerator
 from Agents.ResumeBuilder import ResumeBuilder
 import time
+from utils.voice_utils import text_to_speech_elevenlabs, speech_to_text_assemblyai, cleanup_audio_file
 
 load_dotenv()
 
@@ -35,6 +36,12 @@ st.markdown("""
     }
     .stMarkdown {
         font-size: 18px;
+    }
+    .voice-input-section {
+        background-color: #f0f2f6;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 10px 0;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -385,17 +392,28 @@ def main():
                     
                     with content_container:
                         if not st.session_state.interview_started:
-                            st.markdown("""
+                            welcome_text = """
                             ### Welcome to your AI Interview! 👋
                             
                             I'm here to have a conversation with you about your experience and skills. Don't worry - this is meant to be 
                             a comfortable discussion where you can showcase your expertise. Take your time with your answers, and feel free 
                             to ask for clarification if needed.
                             
+                            You can choose to respond either by voice or text. For voice responses, use the microphone in the voice input section.
+                            
                             Let's start with our first question...
-                            """)
+                            """
+                            st.markdown(welcome_text)
+                            
+                            # Generate and play welcome message
+                            if 'welcome_played' not in st.session_state:
+                                audio_file = text_to_speech_elevenlabs(welcome_text)
+                                if audio_file:
+                                    st.audio(audio_file, format='audio/mp3')
+                                    cleanup_audio_file(audio_file)
+                                st.session_state.welcome_played = True
+                            
                             st.session_state.interview_started = True
-                            # Initialize messages list if first time
                             if 'messages' not in st.session_state:
                                 st.session_state.messages = []
                         
@@ -404,217 +422,133 @@ def main():
                             st.session_state.transition_message = None
                         
                         st.markdown("### Question:")
-                        st.info(st.session_state.current_question['question'])
+                        current_question = st.session_state.current_question['question']
+                        st.info(current_question)
+                        
+                        # Generate and play question audio
+                        if 'last_question' not in st.session_state or st.session_state.last_question != current_question:
+                            audio_file = text_to_speech_elevenlabs(current_question)
+                            if audio_file:
+                                st.audio(audio_file, format='audio/mp3')
+                                cleanup_audio_file(audio_file)
+                            st.session_state.last_question = current_question
+                        
                         st.markdown("---")
                         
-                        # Display chat history from session state
+                        # Display chat history
                         for message in st.session_state.messages:
                             with st.chat_message(message["role"]):
                                 st.markdown(message["content"])
-                    
-                    # Chat input at the bottom
-                    if prompt := st.chat_input("Type your answer here..."):
-                        st.session_state.messages.append({"role": "user", "content": prompt})
-                        with content_container.chat_message("user"):
-                            st.markdown(prompt)
+                        
+                        # Input section with tabs for voice and text
+                        tab1, tab2 = st.tabs(["💬 Text Input", "🎤 Voice Input"])
+                        
+                        with tab1:
+                            # Text input option
+                            if prompt := st.chat_input("Type your answer here..."):
+                                st.session_state.messages.append({"role": "user", "content": prompt})
+                                with st.chat_message("user"):
+                                    st.markdown(prompt)
+                                
+                                process_response(prompt, content_container)
+                        
+                        with tab2:
+                            st.markdown('<div class="voice-input-section">', unsafe_allow_html=True)
+                            st.markdown("### Record Your Answer")
+                            audio_bytes = st.audio_input("Record your answer")
+                            
+                            if audio_bytes:
+                                with st.spinner("Transcribing your answer..."):
+                                    transcribed_text = speech_to_text_assemblyai(audio_bytes)
+                                    if transcribed_text:
+                                        st.session_state.messages.append({"role": "user", "content": transcribed_text})
+                                        with st.chat_message("user"):
+                                            st.markdown(transcribed_text)
+                                        
+                                        process_response(transcribed_text, content_container)
+                            st.markdown('</div>', unsafe_allow_html=True)
 
-                        with st.spinner("Evaluating your answer..."):
-                            response: RunResponse = st.session_state.agent.run(prompt)
-                        
-                        # Only append and show the response if it's not "correct" or "wrong"
-                        if response.content.strip().lower() not in ["correct", "wrong"]:
-                            st.session_state.messages.append({"role": "assistant", "content": response.content})
-                            with content_container.chat_message("assistant"):
-                                st.markdown(response.content)
-                        
-                        # Handle the state changes without showing correct/wrong
-                        if response.content.strip().lower() == "correct":
-                            st.session_state.question_selector.record_result(
-                                st.session_state.current_question['id'], "correct"
-                            )
-                            st.balloons()
-                            transition_messages = [
-                                "Great answer! Let's move on to another interesting topic...",
-                                "Excellent! Now, I'd like to explore a different area with you...",
-                                "Well explained! Let's shift our discussion to another aspect...",
-                                "Very good! Moving on to our next topic of discussion...",
-                                "That's exactly what we were looking for! Let's continue our conversation with..."
-                            ]
-                            transition_msg = random.choice(transition_messages)
-                            st.session_state.messages.append({"role": "assistant", "content": transition_msg})
-                            
-                            # Add the next question to the chat
-                            next_question = select_and_initialize_next_question()
-                            if next_question:
-                                st.session_state.messages.append({
-                                    "role": "assistant", 
-                                    "content": f"### Next Question:\n{next_question['question']}"
-                                })
-                            st.rerun()
-                        elif "wrong" in response.content.lower():
-                            st.session_state.question_selector.record_result(
-                                st.session_state.current_question['id'], "wrong"
-                            )
-                            transition_messages = [
-                                "Thank you for your effort. Let's move on to a different topic...",
-                                "That's a challenging one. Let's explore another area...",
-                                "Let's shift our focus to another interesting topic...",
-                                "Moving on to our next discussion point..."
-                            ]
-                            transition_msg = random.choice(transition_messages)
-                            st.session_state.messages.append({"role": "assistant", "content": transition_msg})
-                            
-                            # Add the next question to the chat
-                            next_question = select_and_initialize_next_question()
-                            if next_question:
-                                st.session_state.messages.append({
-                                    "role": "assistant", 
-                                    "content": f"### Next Question:\n{next_question['question']}"
-                                })
-                            st.rerun()
-        elif st.session_state.page == 'report':
-            st.markdown("## 🎓 Interview Performance Report")
-            
-            # Get all chat history
-            chat_history = st.session_state.messages if 'messages' in st.session_state else []
-            
-            # Prepare data for analysis
-            total_questions = len(load_questions())
-            answered_questions = len(st.session_state.question_selector.asked_questions)
-            questions_by_category = {}
-            performance_by_category = {}
-            
-            for q_id, result in st.session_state.question_selector.asked_questions.items():
-                question = next((q for q in load_questions() if q['id'] == q_id), None)
-                if question:
-                    category = question['category']
-                    if category not in questions_by_category:
-                        questions_by_category[category] = {'total': 0, 'correct': 0}
-                    questions_by_category[category]['total'] += 1
-                    if result == 'correct':
-                        questions_by_category[category]['correct'] += 1
-            
-            # Generate qualitative analysis
-            qualitative_prompt = f"""
-            You are an expert interview assessor. Analyze this interview chat history and provide a comprehensive qualitative assessment.
-            Focus on:
-            1. Overall communication style and clarity
-            2. Technical depth and understanding
-            3. Specific strengths demonstrated
-            4. Areas for improvement
-            5. Notable responses or insights
-            
-            Chat history: {chat_history}
-            
-            Provide the analysis in a well-structured format with clear sections and bullet points.
-            Make it constructive and actionable.
-            """
-            
-            with st.spinner("Generating detailed interview analysis..."):
-                analysis_agent = Agent(
-                    model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
-                    storage=SqlAgentStorage(table_name="analysis_sessions", db_file="tmp/analysis_storage.db")
-                )
-                analysis: RunResponse = analysis_agent.run(qualitative_prompt)
-            
-            # Display the report
-            col1, col2 = st.columns([3, 2])
-            
-            with col1:
-                st.markdown("### 📊 Qualitative Assessment")
-                st.markdown(analysis.content)
-            
-            with col2:
-                st.markdown("### 📈 Quantitative Metrics")
-                
-                # Overall progress
-                st.markdown("#### Overall Progress")
-                progress = answered_questions / total_questions if total_questions > 0 else 0
-                st.progress(progress)
-                st.markdown(f"**Questions Completed:** {answered_questions}/{total_questions}")
-                
-                # Category breakdown
-                st.markdown("#### Performance by Category")
-                for category, stats in questions_by_category.items():
-                    success_rate = (stats['correct'] / stats['total']) * 100 if stats['total'] > 0 else 0
-                    st.markdown(f"**{category}**")
-                    st.progress(success_rate / 100)
-                    st.markdown(f"Success Rate: {success_rate:.1f}% ({stats['correct']}/{stats['total']} questions)")
-                
-                # Topic coverage visualization
-                st.markdown("#### Topic Coverage")
-                import plotly.express as px
-                import pandas as pd
-                
-                # Prepare data for visualization
-                df_data = []
-                for category, stats in questions_by_category.items():
-                    df_data.append({
-                        'Category': category,
-                        'Questions Attempted': stats['total'],
-                        'Success Rate': (stats['correct'] / stats['total'] * 100) if stats['total'] > 0 else 0
-                    })
-                
-                if df_data:
-                    df = pd.DataFrame(df_data)
-                    fig = px.scatter(df, x='Questions Attempted', y='Success Rate', 
-                                   size='Questions Attempted', color='Category',
-                                   title='Topic Coverage and Performance',
-                                   labels={'Success Rate': 'Success Rate (%)'})
-                    st.plotly_chart(fig, use_container_width=True)
-            
-            # Action items and next steps
-            st.markdown("### 🎯 Recommended Next Steps")
-            next_steps_prompt = f"""
-            Based on the interview performance and analysis above, provide 3-5 specific, actionable recommendations 
-            for improvement. Focus on concrete steps the candidate can take to enhance their skills and interview performance.
-            
-            Format the response as bullet points, with each recommendation being clear and actionable.
-            """
-            
-            with st.spinner("Generating recommendations..."):
-                recommendations: RunResponse = analysis_agent.run(next_steps_prompt)
-            
-            st.markdown(recommendations.content)
-            
-            # Return to home button
-            if st.button("Return to Home"):
-                # Reset session state for a new interview
-                for key in ['messages', 'current_question', 'question_selector', 'interview_started', 
-                           'transition_message', 'preparing_interview', 'interview_ready', 'form_data']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.session_state.page = 'home'
-                st.rerun()
-        else:
-            st.markdown("## 🎓 Interview Completed!")
-            st.markdown("You have completed all available questions. Here's your performance summary:")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                total_questions = len(load_questions())
-                answered_questions = len(st.session_state.question_selector.asked_questions)
-                correct_answers = sum(1 for result in st.session_state.question_selector.asked_questions.values() if result == "correct")
-                
-                st.metric("Total Questions Attempted", answered_questions)
-                st.metric("Correct Answers", correct_answers)
-            
-            with col2:
-                st.markdown("### Performance by Category")
-                categories = {}
-                for q_id, result in st.session_state.question_selector.asked_questions.items():
-                    question = next((q for q in load_questions() if q['id'] == q_id), None)
-                    if question:
-                        category = question['category']
-                        if category not in categories:
-                            categories[category] = {"correct": 0, "total": 0}
-                        categories[category]["total"] += 1
-                        if result == "correct":
-                            categories[category]["correct"] += 1
-                
-                for category, stats in categories.items():
-                    success_rate = (stats["correct"] / stats["total"]) * 100
-                    st.markdown(f"- **{category}**: {success_rate:.1f}% ({stats['correct']}/{stats['total']})")
+def process_response(user_input: str, content_container):
+    """Process user response and generate AI response with voice."""
+    with st.spinner("Evaluating your answer..."):
+        response: RunResponse = st.session_state.agent.run(user_input)
+        response_text = response.content.strip()
+        
+        # Handle non-terminal responses (not correct/wrong)
+        if response_text.lower() not in ["correct", "wrong"]:
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
+            with content_container.chat_message("assistant"):
+                st.markdown(response_text)
+                audio_file = text_to_speech_elevenlabs(response_text)
+                if audio_file:
+                    st.audio(audio_file, format='audio/mp3')
+                    cleanup_audio_file(audio_file)
+        
+        # Handle terminal responses (correct/wrong)
+        if response_text.lower() == "correct":
+            handle_correct_answer(content_container)
+        elif response_text.lower() == "wrong":
+            handle_wrong_answer(content_container)
+
+def handle_correct_answer(content_container):
+    """Handle correct answer response."""
+    st.session_state.question_selector.record_result(
+        st.session_state.current_question['id'], "correct"
+    )
+    st.balloons()
+    
+    transition_messages = [
+        "Great answer! Let's move on to another interesting topic...",
+        "Excellent! Now, I'd like to explore a different area with you...",
+        "Well explained! Let's shift our discussion to another aspect...",
+        "Very good! Moving on to our next topic of discussion...",
+        "That's exactly what we were looking for! Let's continue our conversation with..."
+    ]
+    transition_msg = random.choice(transition_messages)
+    st.session_state.messages.append({"role": "assistant", "content": transition_msg})
+    
+    audio_file = text_to_speech_elevenlabs(transition_msg)
+    if audio_file:
+        with content_container.chat_message("assistant"):
+            st.audio(audio_file, format='audio/mp3')
+        cleanup_audio_file(audio_file)
+    
+    next_question = select_and_initialize_next_question()
+    if next_question:
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": f"### Next Question:\n{next_question['question']}"
+        })
+    st.rerun()
+
+def handle_wrong_answer(content_container):
+    """Handle wrong answer response."""
+    st.session_state.question_selector.record_result(
+        st.session_state.current_question['id'], "wrong"
+    )
+    
+    transition_messages = [
+        "Thank you for your effort. Let's move on to a different topic...",
+        "That's a challenging one. Let's explore another area...",
+        "Let's shift our focus to another interesting topic...",
+        "Moving on to our next discussion point..."
+    ]
+    transition_msg = random.choice(transition_messages)
+    st.session_state.messages.append({"role": "assistant", "content": transition_msg})
+    
+    audio_file = text_to_speech_elevenlabs(transition_msg)
+    if audio_file:
+        with content_container.chat_message("assistant"):
+            st.audio(audio_file, format='audio/mp3')
+        cleanup_audio_file(audio_file)
+    
+    next_question = select_and_initialize_next_question()
+    if next_question:
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": f"### Next Question:\n{next_question['question']}"
+        })
+    st.rerun()
 
 if __name__ == "__main__":
     main() 
