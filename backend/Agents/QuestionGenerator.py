@@ -337,40 +337,66 @@ class QuestionGenerator:
         all_questions = []
         question_id = 1
 
-        def process_questions(questions_json, category):
+        def process_questions(questions_str, category):
             nonlocal question_id
-            data = json.loads(questions_json)
-            # Handle the nested structure
-            if isinstance(data, list) and len(data) > 0:
-                if "Skill based Questions" in data[0]:
-                    questions = data[0]["Skill based Questions"]
-                elif "Situational Questions" in data[0]:
-                    questions = data[0]["Situational Questions"]
-                elif "interview_questions" in data[0]:
-                    questions = data[0]["interview_questions"]
-                elif "questions" in data[0]:
-                    questions = data[0]["questions"]
-                elif "question" in data[0]:
-                    questions = data[0]["question"]
-            else:
-                questions = data
+            try:
+                # First, clean up the input string to ensure it's valid JSON
+                questions_str = questions_str.strip()
+                if not questions_str.startswith('['):
+                    questions_str = f'[{questions_str}]'
+                
+                data = json.loads(questions_str)
+                questions = []
+                
+                # Handle different possible JSON structures
+                if isinstance(data, list):
+                    for item in data:
+                        if isinstance(item, dict):
+                            if "questions" in item:
+                                questions.extend(item["questions"])
+                            elif "question" in item:
+                                # If the item itself is a question
+                                questions.append(item)
+                        elif isinstance(item, str):
+                            # Parse the question string that contains "question:", "expected_approach:", etc.
+                            parts = item.split('\n')
+                            current_question = {}
+                            for part in parts:
+                                part = part.strip()
+                                if part.startswith("question:"):
+                                    current_question["question"] = part.replace("question:", "").strip()
+                                elif part.startswith("expected_approach:"):
+                                    current_question["expected_approach"] = part.replace("expected_approach:", "").strip()
+                                elif part.startswith("criteria:"):
+                                    current_question["criteria"] = part.replace("criteria:", "").strip()
+                            if current_question:
+                                questions.append(current_question)
 
-            for q in questions:
-                final_q = FinalQuestion(
-                    id=str(question_id),
-                    question=q["question"],
-                    template=q["expected_approach"],
-                    criteria=q["criteria"],
-                    category=category
-                )
-                all_questions.append(final_q.dict())
-                question_id += 1
+                for q in questions:
+                    if isinstance(q, dict) and "question" in q:
+                        final_q = FinalQuestion(
+                            id=str(question_id),
+                            question=q["question"],
+                            template=q.get("expected_approach", ""),
+                            criteria=q.get("criteria", ""),
+                            category=category
+                        )
+                        all_questions.append(final_q.dict())
+                        question_id += 1
+                
+            except Exception as e:
+                print(f"Error processing questions for category {category}: {str(e)}")
+                print(f"Input string: {questions_str}")
 
         # Process each type of question
-        # process_questions(to_json(interview_questions), "Project Based")
-        process_questions(to_json(theoretical_questions), "Theoretical")
-        process_questions(to_json(skill_questions), "Technical Skills")
-        process_questions(to_json(situational_questions), "Situational")
+        if interview_questions:
+            process_questions(interview_questions, "Project Based")
+        if theoretical_questions:
+            process_questions(theoretical_questions, "Theoretical")
+        if skill_questions:
+            process_questions(skill_questions, "Technical Skills")
+        if situational_questions:
+            process_questions(situational_questions, "Situational")
 
         # Save to questions.json
         with open('questions.json', 'w') as f:

@@ -492,6 +492,7 @@ def process_response(user_input: str, content_container):
 
 def handle_correct_answer(content_container):
     """Handle correct answer response."""
+    # Record the result for the current question
     st.session_state.question_selector.record_result(
         st.session_state.current_question['id'], "correct"
     )
@@ -505,24 +506,42 @@ def handle_correct_answer(content_container):
         "That's exactly what we were looking for! Let's continue our conversation with..."
     ]
     transition_msg = random.choice(transition_messages)
+    
+    # Clear previous messages before adding transition
+    st.session_state.messages = []
     st.session_state.messages.append({"role": "assistant", "content": transition_msg})
     
+    # Generate and play transition audio
     audio_file = text_to_speech_elevenlabs(transition_msg)
     if audio_file:
         with content_container.chat_message("assistant"):
             st.audio(audio_file, format='audio/mp3')
         cleanup_audio_file(audio_file)
     
+    # Select next question and clear agent state
     next_question = select_and_initialize_next_question()
     if next_question:
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": f"### Next Question:\n{next_question['question']}"
-        })
+        # Clear all relevant state
+        st.session_state.messages = []  # Clear messages again for fresh start
+        st.session_state.last_question = None  # Reset last question tracking
+        if 'last_response' in st.session_state:
+            del st.session_state.last_response  # Clear last response
+        
+        # Clear any other stored responses or states
+        if 'agent' in st.session_state:
+            st.session_state.agent = initialize_agent(
+                next_question['question'],
+                next_question['template'],
+                next_question['criteria']
+            )
+    
+    # Force a rerun with a small delay to ensure state updates are processed
+    time.sleep(0.5)
     st.rerun()
 
 def handle_wrong_answer(content_container):
     """Handle wrong answer response."""
+    # Record the result for the current question
     st.session_state.question_selector.record_result(
         st.session_state.current_question['id'], "wrong"
     )
@@ -534,20 +553,37 @@ def handle_wrong_answer(content_container):
         "Moving on to our next discussion point..."
     ]
     transition_msg = random.choice(transition_messages)
+    
+    # Clear previous messages before adding transition
+    st.session_state.messages = []
     st.session_state.messages.append({"role": "assistant", "content": transition_msg})
     
+    # Generate and play transition audio
     audio_file = text_to_speech_elevenlabs(transition_msg)
     if audio_file:
         with content_container.chat_message("assistant"):
             st.audio(audio_file, format='audio/mp3')
         cleanup_audio_file(audio_file)
     
+    # Select next question and clear agent state
     next_question = select_and_initialize_next_question()
     if next_question:
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": f"### Next Question:\n{next_question['question']}"
-        })
+        # Clear all relevant state
+        st.session_state.messages = []  # Clear messages again for fresh start
+        st.session_state.last_question = None  # Reset last question tracking
+        if 'last_response' in st.session_state:
+            del st.session_state.last_response  # Clear last response
+        
+        # Clear any other stored responses or states
+        if 'agent' in st.session_state:
+            st.session_state.agent = initialize_agent(
+                next_question['question'],
+                next_question['template'],
+                next_question['criteria']
+            )
+    
+    # Force a rerun with a small delay to ensure state updates are processed
+    time.sleep(0.5)
     st.rerun()
 
 if __name__ == "__main__":
