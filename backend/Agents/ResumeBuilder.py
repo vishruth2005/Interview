@@ -142,7 +142,7 @@ class ResumeBuilder:
         cleaned_text = re.sub(r"\s+", " ", cleaned_text)
         return cleaned_text.strip()
 
-    async def build_projects(self) -> str:
+    def build_projects(self) -> str:
         """Summarise the specified projects and build the Project section of a Resume."""
         logger.info("Building resume by summarizing project READMEs and LinkedIn data")
 
@@ -196,7 +196,7 @@ class ResumeBuilder:
         logger.info("Resume building complete")
         return resume_building_run.content
 
-    async def build_skills(self) -> str:
+    def build_skills(self) -> str:
         """Extract relevant skills from parsed READMEs and format them for the specific role."""
         logger.info("Building skills section from parsed project READMEs")
 
@@ -272,8 +272,8 @@ class ResumeBuilder:
     
     def build(self):
         self.parse_readmes()
-        resume_result = asyncio.run(self.build_projects())
-        skills_result = asyncio.run(self.build_skills())
+        resume_result = self.build_projects()
+        skills_result = self.build_skills()
         self.fetch_linkedin_profile()
         linked_in = self.use_linked_in()
 
