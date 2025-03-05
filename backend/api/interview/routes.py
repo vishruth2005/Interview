@@ -175,35 +175,15 @@ def generate_questions(role: str, company: str, resume_content: str):
     )
 
     # Generate interview questions in batches
-    interview_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        questions = builder.generate_interview_questions()
-        interview_questions.append(questions)
-
-    # Generate theoretical questions in batches
-    theoretical_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        theory_questions = builder.generate_theoretical_interview_questions()
-        theoretical_questions.append(theory_questions)
-
-    # Generate skill questions in batches
-    skill_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        skill_qs = builder.generate_skill_questions()
-        skill_questions.append(skill_qs)
-
-    # Generate situational questions in batches
-    situational_questions = []
-    for _ in range(2):  # Adjust the range for the number of batches you want
-        situation_qs = builder.Generate_Situations()
-        situational_questions.append(situation_qs)
-
-    # Save all questions to questions.json
+    interview_questions = builder.generate_interview_questions()
+    theoretical_questions = builder.generate_theoretical_interview_questions()
+    skill_questions = builder.generate_skill_questions()
+    situational_questions = builder.Generate_Situations()
     builder.save_questions_to_json(
-        interview_questions[0],
-        theoretical_questions[0],
-        skill_questions[0],
-        situational_questions[0]
+        interview_questions,
+        theoretical_questions,
+        skill_questions,
+        situational_questions
     )
 
 class InterviewData(BaseModel):
