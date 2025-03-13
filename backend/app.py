@@ -13,6 +13,10 @@ from Agents.QuestionGenerator import QuestionGenerator
 from Agents.ResumeBuilder import ResumeBuilder
 import time
 from utils.voice_utils import text_to_speech_elevenlabs, speech_to_text_assemblyai, cleanup_audio_file
+from fpdf import FPDF
+from datetime import datetime
+import base64
+import io
 
 load_dotenv()
 
@@ -584,6 +588,8 @@ def extract_text_from_pdf(pdf_content):
 class QuestionSelector:
     def __init__(self):
         self.asked_questions = {}  # Format: {question_id: result}
+        self.question_attempts = {}  # Format: {question_id: number_of_attempts}
+        self.questions_by_category = {}  # Format: {category: [question_ids]}
         self.question_selector_agent = Agent(
             model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
             storage=SqlAgentStorage(table_name="selector_sessions", db_file="tmp/selector_storage.db"),
@@ -651,6 +657,12 @@ class QuestionSelector:
 
     def record_result(self, question_id: str, result: str):
         self.asked_questions[question_id] = result
+        
+    def record_attempt(self, question_id: str):
+        if question_id not in self.question_attempts:
+            self.question_attempts[question_id] = 1
+        else:
+            self.question_attempts[question_id] += 1
 
 def initialize_agent(question: str, template: str, criteria: str) -> Agent:
     return Agent(
@@ -787,6 +799,10 @@ def main():
             'company': None,
             'resume_file': None
         }
+    if 'question_history' not in st.session_state:
+        st.session_state.question_history = []  # List of all questions asked with their details
+    if 'all_messages' not in st.session_state:
+        st.session_state.all_messages = {}  # Map of question_id to all messages for that question
 
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -1200,8 +1216,47 @@ def main():
                         
                         st.markdown('</div>', unsafe_allow_html=True)
 
+        # Report page
+        elif st.session_state.page == 'report':
+            if 'report_data' not in st.session_state:
+                # Show progress indicator while generating the report
+                st.markdown("""
+                    <style>
+                        .report-loading {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 60vh;
+                            text-align: center;
+                        }
+                    </style>
+                    <div class="report-loading">
+                        <h2 style="color: #4f46e5; margin-bottom: 20px;">Generating Your Performance Report</h2>
+                        <p style="margin-bottom: 30px; font-size: 16px;">Please wait while we analyze your interview performance...</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Show a progress animation
+                progress_placeholder = st.empty()
+                progress_bar = progress_placeholder.progress(0)
+                for i in range(100):
+                    progress_bar.progress(i + 1)
+                    time.sleep(0.02)
+                
+                # Generate the report
+                st.session_state.report_data = generate_report()
+                st.rerun()
+            else:
+                # Display the report
+                display_report()
+
 def process_response(user_input: str, content_container):
     """Process user response and generate AI response with voice."""
+    # Record an attempt for the current question
+    question_id = st.session_state.current_question['id']
+    st.session_state.question_selector.record_attempt(question_id)
+    
     with st.spinner("Evaluating your answer..."):
         response: RunResponse = st.session_state.agent.run(user_input)
         response_text = response.content.strip()
@@ -1231,7 +1286,22 @@ def handle_correct_answer(content_container):
     st.session_state.question_selector.record_result(
         st.session_state.current_question['id'], "correct"
     )
-    st.balloons()
+    
+    # Show balloons for celebration
+   
+    
+    # Store question details in history
+    question_data = {
+        'id': st.session_state.current_question['id'],
+        'question': st.session_state.current_question['question'],
+        'category': st.session_state.current_question['category'],
+        'result': 'correct',
+        'attempts': st.session_state.question_selector.question_attempts.get(st.session_state.current_question['id'], 1)
+    }
+    st.session_state.question_history.append(question_data)
+    
+    # Store conversation for this question
+    st.session_state.all_messages[st.session_state.current_question['id']] = st.session_state.messages.copy()
     
     transition_messages = [
         "Great answer! Let's move on to another interesting topic...",
@@ -1282,6 +1352,19 @@ def handle_wrong_answer(content_container):
         st.session_state.current_question['id'], "wrong"
     )
     
+    # Store question details in history
+    question_data = {
+        'id': st.session_state.current_question['id'],
+        'question': st.session_state.current_question['question'],
+        'category': st.session_state.current_question['category'],
+        'result': 'wrong',
+        'attempts': st.session_state.question_selector.question_attempts.get(st.session_state.current_question['id'], 1)
+    }
+    st.session_state.question_history.append(question_data)
+    
+    # Store conversation for this question
+    st.session_state.all_messages[st.session_state.current_question['id']] = st.session_state.messages.copy()
+    
     transition_messages = [
         "Thank you for your effort. Let's move on to a different topic...",
         "That's a challenging one. Let's explore another area...",
@@ -1322,6 +1405,626 @@ def handle_wrong_answer(content_container):
     # Force a rerun with a small delay to ensure state updates are processed
     time.sleep(0.5)
     st.rerun()
+
+def generate_report():
+    """Generate a comprehensive report of the interview performance."""
+    # Get the question history
+    question_history = st.session_state.question_history
+    
+    if not question_history:
+        return {
+            "quantitative_analysis": {
+                "correct_first_attempt": 0,
+                "correct_multiple_attempts": 0,
+                "wrong": 0,
+                "total": 0
+            },
+            "detailed_analysis": "No questions were answered during this interview session.",
+            "areas_to_improve": ["N/A"]
+        }
+    
+    # 1. Quantitative Analysis
+    correct_first_attempt = sum(1 for q in question_history if q['result'] == 'correct' and q['attempts'] == 1)
+    correct_multiple_attempts = sum(1 for q in question_history if q['result'] == 'correct' and q['attempts'] > 1)
+    wrong_answers = sum(1 for q in question_history if q['result'] == 'wrong')
+    total_questions = len(question_history)
+    
+    quantitative_analysis = {
+        "correct_first_attempt": correct_first_attempt,
+        "correct_multiple_attempts": correct_multiple_attempts,
+        "wrong": wrong_answers,
+        "total": total_questions
+    }
+    
+    # Prepare topic analysis data for the detailed summary
+    by_category = {}
+    for q in question_history:
+        category = q['category']
+        if category not in by_category:
+            by_category[category] = {
+                "total": 0,
+                "correct_first_attempt": 0,
+                "correct_multiple_attempts": 0,
+                "wrong": 0,
+                "questions": []
+            }
+        
+        by_category[category]["total"] += 1
+        by_category[category]["questions"].append({
+            "question": q["question"],
+            "result": q["result"],
+            "attempts": q["attempts"]
+        })
+        
+        if q['result'] == 'correct':
+            if q['attempts'] == 1:
+                by_category[category]["correct_first_attempt"] += 1
+            else:
+                by_category[category]["correct_multiple_attempts"] += 1
+        else:
+            by_category[category]["wrong"] += 1
+    
+    # Calculate strength and weakness scores by category
+    for category, stats in by_category.items():
+        total = stats["total"]
+        if total > 0:
+            # Weighted score: first attempt correct is best, multiple attempts is okay, wrong is worst
+            score = (stats["correct_first_attempt"] * 1.0 + stats["correct_multiple_attempts"] * 0.5) / total
+            stats["performance_score"] = score
+    
+    # Sort categories by performance score
+    sorted_categories = sorted(by_category.items(), key=lambda x: x[1]["performance_score"], reverse=True)
+    strong_categories = [cat for cat, stats in sorted_categories[:2] if stats["performance_score"] > 0.5]
+    weak_categories = [cat for cat, stats in sorted_categories[-2:] if stats["performance_score"] < 0.7]
+    
+    # Prepare conversation data
+    all_conversations = {}
+    for q_id, messages in st.session_state.all_messages.items():
+        question = next((q["question"] for q in question_history if q["id"] == q_id), "Unknown question")
+        category = next((q["category"] for q in question_history if q["id"] == q_id), "Unknown category")
+        all_conversations[q_id] = {
+            "question": question,
+            "category": category,
+            "messages": [{"role": m["role"], "content": m["content"]} for m in messages]
+        }
+    
+    # 3 & 4. Generate Detailed Analysis and Areas to Improve
+    # Create a prompt for the AI to generate these sections
+    prompt = f"""
+    I need to generate a comprehensive performance report for an interview candidate. Here are the details:
+    
+    Quantitative Analysis:
+    - Total Questions: {total_questions}
+    - Correct on First Attempt: {correct_first_attempt} ({int(correct_first_attempt/total_questions*100) if total_questions > 0 else 0}%)
+    - Correct after Multiple Attempts: {correct_multiple_attempts} ({int(correct_multiple_attempts/total_questions*100) if total_questions > 0 else 0}%)
+    - Could Not Answer Correctly: {wrong_answers} ({int(wrong_answers/total_questions*100) if total_questions > 0 else 0}%)
+    
+    Performance by Topics:
+    {json.dumps({category: {"performance_score": stats["performance_score"], "total_questions": stats["total"], 
+                           "correct_first": stats["correct_first_attempt"], 
+                           "correct_with_hints": stats["correct_multiple_attempts"], 
+                           "wrong": stats["wrong"]} 
+                 for category, stats in by_category.items()}, indent=2)}
+    
+    Questions and Results:
+    {json.dumps({q["id"]: {"question": q["question"], "category": q["category"], "result": q["result"], "attempts": q["attempts"]} 
+                for q in question_history}, indent=2)}
+    
+    Strong Categories: {', '.join(strong_categories) if strong_categories else 'None identified'}
+    Weak Categories: {', '.join(weak_categories) if weak_categories else 'None identified'}
+    
+    Based on this information, please provide:
+    
+    1. A detailed analysis (around 4-6 paragraphs) pointwise that:
+       - Analyzes the candidate's overall performance
+       - Identifies strong points in specific topics with examples where possible
+       - Points out weak areas and potential knowledge gaps
+       - Evaluates the quality of answers based on number of attempts needed
+       - Provides context on how the candidate performed across different categories
+    
+    2. A concise list of 3-5 specific areas to improve with actionable recommendations
+    
+    Format your response exactly as follows:
+    {{
+      "detailed_analysis": "Your detailed analysis here...",
+      "areas_to_improve": ["Area 1", "Area 2", "Area 3"]
+    }}
+    
+    Make sure your response is properly formatted as valid JSON. Only include the above fields. Do not include any explanations, introductions, or extra text outside the JSON structure.
+    """
+    
+    # Use the Gemini model to generate the summary and areas to improve
+    agent = Agent(
+        model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+        add_history_to_messages=False,
+        num_history_responses=0
+    )
+    
+    try:
+        response = agent.run(prompt)
+        response_text = response.content.strip()
+        
+        # Try to extract valid JSON from the response if it contains extra text
+        json_start = response_text.find('{')
+        json_end = response_text.rfind('}') + 1
+        
+        if json_start >= 0 and json_end > json_start:
+            json_str = response_text[json_start:json_end]
+            result = json.loads(json_str)
+        else:
+            result = json.loads(response_text)
+            
+        detailed_analysis = result.get("detailed_analysis", "")
+        areas_to_improve = result.get("areas_to_improve", [])
+        
+        # Validate the response
+        if not detailed_analysis or not areas_to_improve:
+            raise ValueError("Missing required fields in the response")
+            
+    except Exception as e:
+        print(f"Error parsing LLM response: {e}")
+        print(f"Raw response: {response.content if hasattr(response, 'content') else 'No response'}")
+        
+        # Fallback with more useful information
+        strong_categories_text = ", ".join(strong_categories) if strong_categories else "none identified"
+        weak_categories_text = ", ".join(weak_categories) if weak_categories else "none identified"
+        
+        # Generate a reasonable fallback based on the data we have
+        correct_percent = int((correct_first_attempt + correct_multiple_attempts) / total_questions * 100) if total_questions > 0 else 0
+        
+        if correct_percent >= 80:
+            performance_level = "excellent"
+        elif correct_percent >= 60:
+            performance_level = "good"
+        elif correct_percent >= 40:
+            performance_level = "moderate"
+        else:
+            performance_level = "needs improvement"
+            
+        detailed_analysis = f"""
+        The candidate demonstrated {performance_level} performance overall, correctly answering {correct_first_attempt + correct_multiple_attempts} out of {total_questions} questions ({correct_percent}%).
+        
+        Strong performance was observed in the following topics: {strong_categories_text}. The candidate was able to answer questions in these areas with fewer attempts, demonstrating solid knowledge.
+        
+        Areas requiring improvement include: {weak_categories_text}. In these topics, the candidate either needed multiple attempts to arrive at correct answers or was unable to answer correctly.
+        
+        Of note, {correct_first_attempt} questions ({int(correct_first_attempt/total_questions*100) if total_questions > 0 else 0}%) were answered correctly on the first attempt, showing areas of strong immediate recall and understanding. {correct_multiple_attempts} questions required additional hints or multiple attempts, indicating areas where knowledge exists but may need reinforcement. {wrong_answers} questions ({int(wrong_answers/total_questions*100) if total_questions > 0 else 0}%) could not be answered correctly, suggesting knowledge gaps that should be addressed.
+        """
+        
+        # Generate fallback areas to improve
+        areas_to_improve = []
+        
+        if weak_categories:
+            areas_to_improve.append(f"Focus on strengthening knowledge in {', '.join(weak_categories)}")
+            
+        if wrong_answers > 0:
+            areas_to_improve.append("Review core concepts in areas where questions couldn't be answered correctly")
+            
+        if correct_multiple_attempts > 0:
+            areas_to_improve.append("Practice explaining concepts more clearly to reduce the need for hints")
+            
+        # Add a general recommendation
+        areas_to_improve.append("Engage in more practice interviews to improve response quality and confidence")
+    
+    return {
+        "quantitative_analysis": quantitative_analysis,
+        "detailed_analysis": detailed_analysis,
+        "areas_to_improve": areas_to_improve
+    }
+
+def generate_pdf_report():
+    """Generate a PDF version of the interview report using FPDF."""
+    if 'report_data' not in st.session_state:
+        return None
+    
+    try:
+        report = st.session_state.report_data
+        quant = report["quantitative_analysis"]
+        total = quant["total"]
+        
+        # Calculate percentages
+        correct_first_percent = int((quant["correct_first_attempt"] / total * 100) if total > 0 else 0)
+        correct_multiple_percent = int((quant["correct_multiple_attempts"] / total * 100) if total > 0 else 0)
+        wrong_percent = int((quant["wrong"] / total * 100) if total > 0 else 0)
+        
+        # Create a PDF object
+        pdf = FPDF()
+        # Use UTF-8 encoding
+        pdf.add_page()
+        
+        # Set up the PDF
+        pdf.set_author("AI Interview System")
+        pdf.set_title("Interview Performance Report")
+        
+        # Add logo and header
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, "Interview Performance Report", 0, 1, "C")
+        pdf.set_font("Arial", "I", 10)
+        pdf.cell(0, 10, f"Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}", 0, 1, "C")
+        pdf.ln(10)
+        
+        # Section: Quantitative Analysis
+        pdf.set_font("Arial", "B", 14)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 10, "Quantitative Analysis", 1, 1, "L", 1)
+        pdf.ln(5)
+        
+        # Create a table for the stats
+        pdf.set_font("Arial", "", 10)
+        
+        # Headers
+        pdf.set_fill_color(230, 230, 230)
+        pdf.cell(50, 10, "Metric", 1, 0, "L", 1)
+        pdf.cell(30, 10, "Count", 1, 0, "C", 1)
+        pdf.cell(30, 10, "Percentage", 1, 0, "C", 1)
+        pdf.cell(80, 10, "Performance", 1, 1, "C", 1)
+        
+        # Total questions
+        pdf.cell(50, 10, "Total Questions", 1, 0, "L")
+        pdf.cell(30, 10, str(total), 1, 0, "C")
+        pdf.cell(30, 10, "100%", 1, 0, "C")
+        pdf.cell(80, 10, "", 1, 1, "C")
+        
+        # Correct on first attempt
+        pdf.cell(50, 10, "Correct on First Try", 1, 0, "L")
+        pdf.cell(30, 10, str(quant['correct_first_attempt']), 1, 0, "C")
+        pdf.cell(30, 10, f"{correct_first_percent}%", 1, 0, "C")
+        
+        # Simple progress bar visualization
+        progress_cell_width = 80
+        bar_width = int(progress_cell_width * correct_first_percent / 100)
+        pdf.set_fill_color(16, 185, 129)  # Green color
+        pdf.cell(bar_width, 10, "", 0, 0, "L", 1)
+        pdf.cell(progress_cell_width - bar_width, 10, "", 0, 1, "L", 0)
+        
+        # Correct after hints
+        pdf.cell(50, 10, "Correct After Hints", 1, 0, "L")
+        pdf.cell(30, 10, str(quant['correct_multiple_attempts']), 1, 0, "C")
+        pdf.cell(30, 10, f"{correct_multiple_percent}%", 1, 0, "C")
+        
+        # Progress bar for correct after hints
+        bar_width = int(progress_cell_width * correct_multiple_percent / 100)
+        pdf.set_fill_color(245, 158, 11)  # Orange color
+        pdf.cell(bar_width, 10, "", 0, 0, "L", 1)
+        pdf.cell(progress_cell_width - bar_width, 10, "", 0, 1, "L", 0)
+        
+        # Wrong answers
+        pdf.cell(50, 10, "Could Not Answer", 1, 0, "L")
+        pdf.cell(30, 10, str(quant['wrong']), 1, 0, "C")
+        pdf.cell(30, 10, f"{wrong_percent}%", 1, 0, "C")
+        
+        # Progress bar for wrong answers
+        bar_width = int(progress_cell_width * wrong_percent / 100)
+        pdf.set_fill_color(239, 68, 68)  # Red color
+        pdf.cell(bar_width, 10, "", 0, 0, "L", 1)
+        pdf.cell(progress_cell_width - bar_width, 10, "", 0, 1, "L", 0)
+        
+        pdf.ln(10)
+        
+        # Section: Detailed Analysis
+        pdf.set_font("Arial", "B", 14)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 10, "Detailed Performance Analysis", 1, 1, "L", 1)
+        pdf.ln(5)
+        
+        # Format the analysis text with proper spacing and line breaks
+        pdf.set_font("Arial", "", 10)
+        
+        # Make sure we handle special characters properly
+        analysis_text = report["detailed_analysis"].strip()
+        
+        # Process text in smaller chunks to avoid encoding issues
+        try:
+            # Split long text into paragraphs and print each
+            paragraphs = analysis_text.split('\n\n')
+            for paragraph in paragraphs:
+                paragraph = paragraph.strip()
+                if paragraph:
+                    # Remove any non-standard characters that might cause issues
+                    safe_paragraph = ''.join(c if ord(c) < 128 else ' ' for c in paragraph)
+                    pdf.multi_cell(0, 5, safe_paragraph)
+                    pdf.ln(3)
+        except Exception as text_error:
+            st.error(f"Error processing text: {text_error}")
+            pdf.multi_cell(0, 5, "Error displaying detailed analysis text.")
+        
+        pdf.ln(5)
+        
+        # Section: Areas to Improve
+        pdf.set_font("Arial", "B", 14)
+        pdf.set_fill_color(240, 240, 240)
+        pdf.cell(0, 10, "Areas to Improve", 1, 1, "L", 1)
+        pdf.ln(5)
+        
+        # List areas to improve
+        pdf.set_font("Arial", "", 10)
+        for i, area in enumerate(report["areas_to_improve"], 1):
+            try:
+                pdf.set_font("Arial", "B", 10)
+                pdf.cell(10, 10, f"{i}.", 0, 0)
+                pdf.set_font("Arial", "", 10)
+                # Remove any non-standard characters that might cause issues
+                safe_area = ''.join(c if ord(c) < 128 else ' ' for c in area)
+                pdf.multi_cell(0, 10, safe_area)
+            except Exception as area_error:
+                st.error(f"Error processing improvement area: {area_error}")
+        
+        # Footer
+        pdf.ln(10)
+        pdf.set_font("Arial", "I", 8)
+        pdf.cell(0, 10, "Generated by AI Interview System", 0, 0, "C")
+        
+        # Return the PDF as bytes 
+        try:
+            # Try with latin1 encoding first (FPDF default)
+            return pdf.output(dest='S').encode('latin1')
+        except UnicodeEncodeError:
+            # If that fails, try a different approach with a BytesIO buffer
+            buffer = io.BytesIO()
+            pdf.output(buffer)
+            pdf_bytes = buffer.getvalue()
+            buffer.close()
+            return pdf_bytes
+        
+    except Exception as e:
+        st.error(f"Error creating PDF: {e}")
+        return None
+
+def get_pdf_download_link(pdf_data, filename="Interview_Report.pdf"):
+    """Generate a download link for the PDF report."""
+    if pdf_data is None:
+        return None
+    
+    # Encode PDF binary data to base64
+    b64 = base64.b64encode(pdf_data).decode()
+    
+    # Create a styled download link
+    href = f'''
+    <a href="data:application/pdf;base64,{b64}" download="{filename}" 
+       style="display: inline-block; 
+              background-color: #10b981; 
+              color: white; 
+              text-decoration: none; 
+              padding: 12px 24px; 
+              border-radius: 8px; 
+              font-weight: 600; 
+              transition: all 0.3s ease;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              margin: 10px 0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" style="vertical-align: text-bottom; margin-right: 8px;" viewBox="0 0 16 16">
+            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+            <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+        </svg>
+        Download PDF Report
+    </a>
+    '''
+    return href
+
+def display_report():
+    """Display the interview performance report."""
+    st.markdown("""
+        <style>
+            .report-container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 40px;
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+            .report-header {
+                margin-bottom: 30px;
+                text-align: center;
+            }
+            .report-section {
+                margin-bottom: 40px;
+                padding: 20px;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+            }
+            .report-section-title {
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: #4f46e5;
+                border-bottom: 2px solid #e5e7eb;
+                padding-bottom: 10px;
+            }
+            .stat-box {
+                background-color: #ffffff;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 10px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+            .stat-label {
+                font-size: 14px;
+                color: #6b7280;
+            }
+            .stat-value {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1f2937;
+            }
+            .progress-bar-container {
+                height: 10px;
+                background-color: #e5e7eb;
+                border-radius: 5px;
+                margin-top: 5px;
+                overflow: hidden;
+            }
+            .progress-bar {
+                height: 100%;
+                border-radius: 5px;
+            }
+            .good-progress {
+                background-color: #10b981;
+            }
+            .medium-progress {
+                background-color: #f59e0b;
+            }
+            .poor-progress {
+                background-color: #ef4444;
+            }
+            .analysis-text {
+                line-height: 1.8;
+                font-size: 16px;
+                color: #111827;
+                padding: 10px;
+                white-space: pre-line;
+            }
+            .analysis-text p {
+                margin-bottom: 15px;
+            }
+            .improve-item {
+                background-color: #ffffff;
+                border-left: 4px solid #4f46e5;
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 0 8px 8px 0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            }
+            .home-button-container {
+                text-align: center;
+                margin-top: 40px;
+            }
+            .button-row {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                margin-top: 40px;
+            }
+            .download-btn {
+                background-color: #10b981 !important;
+                color: white !important;
+            }
+            .pdf-download-link {
+                text-align: center;
+                margin-top: 20px;
+            }
+            .pdf-download-link a {
+                display: inline-block;
+                background-color: #10b981;
+                color: white;
+                text-decoration: none;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .pdf-download-link a:hover {
+                background-color: #059669;
+                transform: translateY(-2px);
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<h1 class='report-header'>Interview Performance Report</h1>", unsafe_allow_html=True)
+    
+    if 'report_data' not in st.session_state:
+        st.session_state.report_data = generate_report()
+    
+    report = st.session_state.report_data
+    quant = report["quantitative_analysis"]
+    total = quant["total"]
+    
+    # 1. Quantitative Analysis Section
+    st.markdown("<div class='report-section'>", unsafe_allow_html=True)
+    st.markdown("<h2 class='report-section-title'>Quantitative Analysis</h2>", unsafe_allow_html=True)
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown("<div class='stat-box'>", unsafe_allow_html=True)
+        st.markdown("<div class='stat-label'>Total Questions</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-value'>{quant['total']}</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with col2:
+        correct_first_percent = int((quant["correct_first_attempt"] / total * 100) if total > 0 else 0)
+        st.markdown("<div class='stat-box'>", unsafe_allow_html=True)
+        st.markdown("<div class='stat-label'>Correct on First Try</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-value'>{quant['correct_first_attempt']} ({correct_first_percent}%)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='progress-bar-container'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='progress-bar good-progress' style='width: {correct_first_percent}%'></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with col3:
+        correct_multiple_percent = int((quant["correct_multiple_attempts"] / total * 100) if total > 0 else 0)
+        st.markdown("<div class='stat-box'>", unsafe_allow_html=True)
+        st.markdown("<div class='stat-label'>Correct After Hints</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-value'>{quant['correct_multiple_attempts']} ({correct_multiple_percent}%)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='progress-bar-container'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='progress-bar medium-progress' style='width: {correct_multiple_percent}%'></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with col4:
+        wrong_percent = int((quant["wrong"] / total * 100) if total > 0 else 0)
+        st.markdown("<div class='stat-box'>", unsafe_allow_html=True)
+        st.markdown("<div class='stat-label'>Could Not Answer</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='stat-value'>{quant['wrong']} ({wrong_percent}%)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='progress-bar-container'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='progress-bar poor-progress' style='width: {wrong_percent}%'></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # 2. Detailed Analysis (formerly section 3)
+    st.markdown("<div class='report-section'>", unsafe_allow_html=True)
+    st.markdown("<h2 class='report-section-title'>Detailed Performance Analysis</h2>", unsafe_allow_html=True)
+    
+    # Format the analysis text with proper spacing and line breaks
+    analysis_text = report["detailed_analysis"].strip()
+    st.markdown(f"<div class='analysis-text'>{analysis_text}</div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # 3. Areas to Improve (formerly section 4)
+    st.markdown("<div class='report-section'>", unsafe_allow_html=True)
+    st.markdown("<h2 class='report-section-title'>Areas to Improve</h2>", unsafe_allow_html=True)
+    
+    for area in report["areas_to_improve"]:
+        st.markdown(f"<div class='improve-item'>{area}</div>", unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Generate PDF when button is clicked
+    if st.button("Export to PDF", type="primary", key="export_pdf_btn"):
+        with st.spinner("Generating PDF report..."):
+            pdf_data = generate_pdf_report()
+            if pdf_data:
+                # Generate download link
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                download_link = get_pdf_download_link(pdf_data, f"Interview_Report_{timestamp}.pdf")
+                st.success("PDF generated successfully!")
+                st.markdown(f"<div class='pdf-download-link'>{download_link}</div>", unsafe_allow_html=True)
+                
+                # Add instructions
+                st.markdown("""
+                    <div style="margin-top: 10px; font-size: 14px; color: #6b7280; text-align: center;">
+                        Click the button above to download your interview report as a PDF file.
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.error("Failed to generate PDF. We're using a simpler PDF generation approach that might have limitations.")
+                st.info("Try again or contact support if the issue persists.")
+    
+    # Button to go back to home
+    st.markdown("<div class='home-button-container'>", unsafe_allow_html=True)
+    if st.button("Return to Home", type="primary", key="report_home_btn"):
+        # Reset session state for a fresh start
+        for key in ['question_history', 'all_messages', 'current_question', 'messages', 'report_data']:
+            if key in st.session_state:
+                del st.session_state[key]
+        
+        # Initialize a new question selector
+        st.session_state.question_selector = QuestionSelector()
+        st.session_state.page = 'home'
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main() 

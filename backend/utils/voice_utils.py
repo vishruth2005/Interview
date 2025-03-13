@@ -15,7 +15,7 @@ def text_to_speech_elevenlabs(text_to_speak: str) -> str:
         client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
         audio_stream = client.text_to_speech.convert_as_stream(
             text=text_to_speak,
-            voice_id="IKne3meq5aSn9XLyUdCD",  # Charlotte voice
+            voice_id="56AoDkrOh6qfVPDXZ7Pt",  # Charlotte voice
             model_id="eleven_multilingual_v2",
             
         )
