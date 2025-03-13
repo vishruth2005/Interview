@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -7,10 +6,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "var(--primary)",
-        'primary-dark': "var(--primary-dark)",
-      },
+        primary: '#9BC53D',
+        secondary: '#FDE5E5',
+      }
     },
   },
-  plugins: [require("@tailwindcss/forms")],
-} 
+  plugins: [],
+}

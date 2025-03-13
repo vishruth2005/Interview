@@ -1,30 +1,21 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import InterviewPrep from './pages/InterviewPrep';
-import Interview from './pages/Interview';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Welcome from './pages/Welcome';
 import ResumeBuilder from './pages/ResumeBuilder';
+import InterviewSystem from './pages/InterviewSystem';
+import InterviewQuestions from './pages/InterviewQuestions';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 py-8"
-      >
+    <Router>
+      <div className="min-h-screen bg-gray-50">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/interview-prep" element={<InterviewPrep />} />
-          <Route path="/interview" element={<Interview />} />
+          <Route path="/" element={<Welcome />} />
           <Route path="/resume-builder" element={<ResumeBuilder />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/interview-system" element={<InterviewSystem />} />
+          <Route path="/interview-questions" element={<InterviewQuestions />} />
         </Routes>
-      </motion.div>
-    </div>
+      </div>
+    </Router>
   );
 }
 
