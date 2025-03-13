@@ -2,52 +2,143 @@
     "questions": [
         {
             "id": "1",
-            "question": "Describe a time you had to navigate conflicting interests between project stakeholders. How did you identify the root causes of the conflict, and what specific strategies did you use to build consensus and ensure project success, detailing the communication techniques employed and their effectiveness?",
-            "template": "The candidate should describe a specific situation, outlining the stakeholders involved, their differing interests, and the potential impact on the project. They should then detail the methods used to identify the root causes of the conflict (e.g., active listening, facilitated discussions, data analysis) and the strategies employed to build consensus (e.g., negotiation, compromise, mediation). They should clearly articulate the communication techniques used (e.g., one-on-one meetings, group workshops, written communication) and provide a candid assessment of their effectiveness. The answer should highlight their ability to understand diverse perspectives, build trust, and facilitate collaborative problem-solving.",
-            "criteria": "The answer should demonstrate a clear understanding of stakeholder management principles and conflict resolution techniques. The candidate should provide a detailed and specific example, illustrating their ability to analyze complex situations, develop and implement effective strategies, and communicate clearly and persuasively. The assessment will focus on the depth of their understanding, the practicality of their approach, and the demonstrable impact of their actions.",
+            "question": "Explain the concept of 'cold start problem' in collaborative filtering and describe three different strategies to mitigate its effects when recommending products to new users on an e-commerce platform.",
+            "template": "The candidate should define the cold start problem and then discuss strategies like content-based filtering as an initial approach, leveraging popularity-based recommendations as a fallback, and using techniques such as asking new users for their preferences upfront through questionnaires or initial ratings.",
+            "criteria": "The answer should demonstrate a clear understanding of the cold start problem and provide practical, well-explained strategies. The candidate should discuss the trade-offs of each strategy and their applicability based on the scenario.",
             "category": "Project Based"
         },
         {
             "id": "2",
-            "question": "Walk me through a scenario where your market entry strategy was based on indirect channel partnerships. Explain the specific process you undertook to assess potential partners, what selection criteria did you use, and how did you mitigate possible risks stemming from misaligned goals or lack of control over the partner's sales process. What kind of agreement/contractual obligations did you create?",
-            "template": "The candidate should describe a situation where an indirect channel strategy was crucial for market entry. They should detail the process of identifying and evaluating potential partners, including the specific criteria used (e.g., market reach, industry expertise, financial stability, cultural alignment). The candidate should then explain how they mitigated risks associated with channel partnerships, such as misaligned goals or lack of control over the sales process. This explanation should include examples of specific strategies used, such as clearly defined partnership agreements, performance-based incentives, and regular communication and monitoring. The answer should also cover the contractual obligations and legal aspects considered.",
-            "criteria": "The answer should demonstrate a strong understanding of indirect channel strategies and the associated risks and challenges. The candidate should provide a detailed and practical account of their experience, highlighting their ability to identify and evaluate potential partners, mitigate risks, and manage relationships effectively. The answer should showcase strategic thinking, risk assessment skills, and relationship management expertise.",
+            "question": "In Content-Based Filtering, how do you determine the optimal set of item features to represent a product in an e-commerce setting, and what are some potential challenges in extracting these features from unstructured data like product descriptions?",
+            "template": "The candidate should describe a process for identifying relevant features, potentially involving techniques like feature importance analysis using machine learning models or leveraging domain expertise. They should then discuss the challenges of extracting these features from unstructured data, highlighting issues like ambiguity in language, handling synonyms and polysemy, and the need for NLP techniques like stemming, lemmatization, and named entity recognition.",
+            "criteria": "The response should showcase a structured approach to feature selection and extraction. The candidate should identify common NLP challenges and propose solutions to overcome them, demonstrating an understanding of practical considerations.",
             "category": "Project Based"
         },
         {
             "id": "3",
-            "question": "Describe a situation where you were managing a project utilizing the Logical Framework Approach (LFA). Elaborate on how you specifically defined the intervention logic (i.e., the causal links between activities, outputs, outcomes, and impact). What methods did you use to ensure that your indicators were SMART (Specific, Measurable, Achievable, Relevant, Time-bound) and how did you incorporate feedback loops for adaptive management during the project lifecycle?",
-            "template": "The candidate should thoroughly describe a project using LFA, detailing the process of defining the intervention logic, including defining activities, outputs, outcomes, and impact. They should give specific examples of how they ensured that the indicators used to track progress were SMART, and explain the methods used to measure those indicators. A crucial element of the response is a description of the feedback mechanisms incorporated into the project design to allow for adaptive management and how these mechanisms were actually used to modify the project plan. The answer should also include the process of creating the logframe matrix and how stakeholders were involved. The candidate should specifically describe how the logframe was utilized throughout the project lifecycle.",
-            "criteria": "The response should showcase a deep understanding of the LFA framework and its practical application in project management. Key evaluation criteria include the clarity and coherence of the described intervention logic, the appropriateness of the selected indicators, and the effectiveness of the feedback mechanisms used for adaptive management. Bonus points for describing challenges implementing the LFA and the process for course-correcting.",
+            "question": "Design a reward function for a reinforcement learning agent that recommends products in an e-commerce environment, taking into account both short-term gains (e.g., immediate purchases) and long-term goals (e.g., customer lifetime value, repeat purchases). How would you balance these potentially conflicting objectives?",
+            "template": "The candidate should propose a reward function that incorporates various factors like click-through rate, conversion rate, revenue per transaction, and customer retention rate. They should discuss weighting strategies for different components to balance short-term and long-term goals, potentially using techniques like discounting future rewards or incorporating a term that represents customer lifetime value based on historical data. The candidate should also address potential gaming of the reward function and how to prevent it.",
+            "criteria": "The response should illustrate a deep understanding of reward function design in reinforcement learning. The candidate should show an ability to align the reward function with business objectives and address the challenges of balancing short-term and long-term goals in a real-world e-commerce environment.",
             "category": "Project Based"
         },
         {
             "id": "4",
-            "question": "You are tasked with improving a client's operational efficiency using benchmarking. Detail your process for selecting relevant companies for benchmarking, including the key performance indicators (KPIs) you would prioritize. Discuss specific methods for collecting and validating benchmarking data (e.g., publicly available reports, primary research) and how you would normalize the data to account for differences in scale and business models.",
-            "template": "The candidate should present a structured approach for selecting relevant companies for benchmarking, including the criteria used for selection and the rationale behind prioritizing specific KPIs (e.g., cost efficiency, productivity, customer satisfaction). They should describe the methods they would use to collect benchmarking data, emphasizing the importance of data validation and reliability. The candidate should also explain how they would normalize the data to account for differences in scale and business models, providing specific examples of normalization techniques (e.g., ratio analysis, statistical adjustments). Discuss the ethical considerations associated with data collection and dissemination.",
-            "criteria": "The answer should demonstrate a strong understanding of benchmarking principles and best practices. The candidate should provide a clear and practical framework for selecting benchmark companies, collecting and validating data, and normalizing the data for meaningful comparisons. The evaluation will focus on the candidate's analytical skills, attention to detail, and ability to apply benchmarking techniques to improve operational efficiency, as well as their understanding of ethical and legal considerations.",
+            "question": "Explain how you would use recurrent neural networks (RNNs) and attention mechanisms to model user browsing history for product recommendations in an e-commerce setting. What are the advantages of using attention mechanisms in this context, and how would you implement it?",
+            "template": "The candidate should describe how an RNN can capture the sequential dependencies in user browsing history. They should then explain how attention mechanisms can help the model focus on the most relevant items in the browsing history for making recommendations. The candidate should describe different attention mechanisms (e.g., self-attention, additive attention) and explain how they would implement one in practice, including defining the attention weights and how they are used to weigh the different items in the browsing history.",
+            "criteria": "The candidate's answer should demonstrate a strong understanding of RNNs and attention mechanisms. The candidate should explain the specific benefits of attention in the context of recommendation systems and be able to discuss implementation details.",
             "category": "Project Based"
         },
         {
             "id": "5",
-            "question": "Imagine you're working with a non-profit that is aiming to increase its funding via grants. Develop a detailed strategy for identifying the relevant OECD DAC criteria for evaluating the non-profit's specific programs and demonstrate how those criteria can be translated into compelling narratives and measurable indicators for a grant proposal to attract more funding.",
-            "template": "The candidate should identify the relevant OECD DAC criteria (Relevance, Effectiveness, Efficiency, Impact, and Sustainability) and specifically explain how each criterion applies to the non-profit's programs, giving examples based on a hypothetical program the interviewer presents or one of their choosing. Then, they should translate these criteria into compelling narratives, e.g., by constructing a Theory of Change, showing the logical pathways from inputs to activities, outputs, outcomes, and impact. Finally, they should describe the process of turning these narratives into SMART (Specific, Measurable, Achievable, Relevant, and Time-bound) indicators to assess the program's performance within the grant proposal. The strategy should also consider strategies for tailoring narratives to specific funders' priorities.",
-            "criteria": "The answer should demonstrate a deep understanding of the OECD DAC criteria and their application in the context of grant writing. Evaluate the ability to translate abstract criteria into concrete narratives and measurable indicators, demonstrating a practical approach for attracting grant funding. The candidate's strategic thinking, storytelling abilities, and understanding of donor preferences will be assessed.",
+            "question": "You are tasked with building a personalized product recommendation system using deep learning, but you have limited data for a specific product category. Describe how you would leverage transfer learning to improve the performance of your model. Which pre-trained models would you consider, and how would you fine-tune them for your specific task?",
+            "template": "The candidate should explain the concept of transfer learning and its applicability to this scenario. They should suggest pre-trained models like those trained on large e-commerce datasets or general-purpose image/text models, depending on the product category. The candidate should describe how they would fine-tune the pre-trained model, including selecting which layers to freeze or fine-tune, and how to adapt the output layer to the specific product category. They should also discuss strategies for data augmentation or synthetic data generation to further improve performance.",
+            "criteria": "The candidate should demonstrate a clear understanding of transfer learning and its application to recommendation systems. The candidate should select appropriate pre-trained models and describe a clear strategy for fine-tuning them, demonstrating practical knowledge of deep learning model development.",
             "category": "Project Based"
         },
         {
             "id": "6",
-            "question": "Kunaal, your resume mentions your role as Growth Coordinator at 180 Degrees Consulting NITK, where you spearheaded client acquisition for the APAC region. Can you elaborate on a specific challenge you faced in converting an overseas lead, and how did you overcome it?",
-            "template": "The candidate should describe a specific situation where they faced a challenge in converting an overseas lead. They should clearly articulate the challenge, the steps they took to address it, the resources they utilized, and the outcome of their efforts. The response should demonstrate their problem-solving skills, cultural sensitivity, communication skills, and ability to navigate complex situations.",
-            "criteria": "The answer will be judged based on the clarity and specificity of the example provided, the relevance of the challenges described to international client acquisition, the candidate's problem-solving approach, the demonstrated ability to learn and adapt, and the quantifiable impact of their actions. Look for evidence of initiative, resourcefulness, and effective communication. A strong answer will also reflect an understanding of cultural nuances and the importance of building strong client relationships.",
-            "category": "Situational"
+            "question": "Explain how the Cold Start Problem affects Collaborative Filtering and describe potential strategies to mitigate its impact.",
+            "template": "The candidate should define the cold start problem, explain how it manifests in collaborative filtering (both new user and new item scenarios), and then discuss mitigation techniques like content-based filtering as a hybrid approach, or leveraging user demographics.",
+            "criteria": "The answer should demonstrate a clear understanding of the cold start problem, its implications for collaborative filtering, and the ability to articulate relevant mitigation strategies with reasoning.",
+            "category": "Theory Based"
         },
         {
             "id": "7",
-            "question": "Imagine you're tasked with leading a project for a new client in the renewable energy sector. The client has conflicting internal stakeholders, each with different priorities and expectations. How would you approach managing these diverse perspectives to ensure a successful project outcome?",
-            "template": "The candidate should outline a structured approach to managing the conflicting stakeholder priorities. This should include identifying key stakeholders, understanding their individual perspectives and priorities, facilitating communication and collaboration, and developing a plan that addresses the core needs of the client while considering the concerns of all stakeholders. The response should also demonstrate their ability to negotiate, compromise, and build consensus.",
-            "criteria": "The answer will be judged based on the candidate's demonstrated understanding of stakeholder management principles, their ability to develop a structured and practical approach, their communication and interpersonal skills, and their ability to navigate complex and politically sensitive situations. Look for evidence of empathy, active listening, and a results-oriented mindset. A strong answer will also highlight the importance of clear communication, transparency, and proactive risk management.",
-            "category": "Situational"
+            "question": "What is the trade-off between Exploration and Exploitation in Reinforcement Learning, and how does the Reward Function influence this balance in the context of E-commerce Personalization?",
+            "template": "The candidate should define exploration and exploitation, explain the need to balance them, and then discuss how different reward functions (e.g., focusing solely on immediate click-through rate vs. long-term customer lifetime value) can shift the balance. They should also mention specific algorithms like epsilon-greedy or upper confidence bound (UCB) as possible approaches.",
+            "criteria": "The answer should demonstrate a comprehensive understanding of the exploration-exploitation dilemma, its relationship to reward function design, and relevant algorithms or techniques.",
+            "category": "Theory Based"
+        },
+        {
+            "id": "8",
+            "question": "Describe the role of Embedding Layers in Deep Learning models for E-commerce Personalization, and how they contribute to improved performance compared to traditional feature engineering techniques.",
+            "template": "The candidate should explain how embedding layers learn low-dimensional representations of categorical data (users, items), allowing the model to capture semantic relationships. They should contrast this with traditional feature engineering (e.g., one-hot encoding) and highlight the benefits of embeddings, such as dimensionality reduction, generalization, and the ability to capture complex interactions. Mentioning specific embedding techniques like word2vec or GloVe (adapted for user/item embeddings) would be a plus.",
+            "criteria": "The answer should clearly articulate the function of embedding layers, their advantages over traditional methods, and their impact on model performance in personalization tasks.",
+            "category": "Theory Based"
+        },
+        {
+            "id": "9",
+            "question": "Describe a situation where you had to use data analysis to solve a complex business problem. What specific analytical techniques did you use, and what were the key insights and recommendations you derived from the data?",
+            "template": "The candidate should describe the problem, the data sources they used, the analytical methods employed (e.g., regression, clustering, hypothesis testing), and the actionable insights that resulted from their analysis. They should clearly explain how the data analysis led to a specific recommendation or solution.",
+            "criteria": "The answer should demonstrate a clear understanding of data analysis techniques, the ability to apply them to solve business problems, and the ability to communicate insights effectively. The candidate should highlight the impact of their analysis on the business outcome.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "10",
+            "question": "Walk me through your approach to developing a market entry strategy for a new product. What factors would you consider, and how would you assess the potential market size and competitive landscape?",
+            "template": "The candidate should outline a structured approach to strategy development, considering factors such as market size, competitive intensity, regulatory environment, customer needs, and potential barriers to entry. They should demonstrate an understanding of market research techniques and competitive analysis frameworks (e.g., Porter's Five Forces).",
+            "criteria": "The answer should demonstrate a solid understanding of market analysis and strategic frameworks, and the ability to develop a coherent and well-supported market entry strategy.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "11",
+            "question": "Describe a time when you had to manage a project with conflicting stakeholder priorities. How did you navigate those conflicts, and what steps did you take to ensure the project stayed on track?",
+            "template": "The candidate should provide a specific example of a project where stakeholder priorities were misaligned. They should describe the communication strategies they used, the negotiation techniques employed, and the methods used to prioritize tasks and manage expectations. They should also explain how they measured project success.",
+            "criteria": "The answer should highlight the candidate's ability to manage complex projects, navigate stakeholder conflicts, and maintain project momentum. The candidate should demonstrate strong communication, negotiation, and problem-solving skills.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "12",
+            "question": "Explain how you would use Porter's Five Forces to analyze the attractiveness of the airline industry.",
+            "template": "The candidate should systematically apply each of Porter's Five Forces (threat of new entrants, bargaining power of suppliers, bargaining power of buyers, threat of substitute products or services, and industry rivalry) to the airline industry, providing specific examples and insights for each force.",
+            "criteria": "The answer should demonstrate a thorough understanding of Porter's Five Forces framework and the ability to apply it effectively to a specific industry. The candidate should provide concrete examples and logical reasoning to support their analysis.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "13",
+            "question": "Describe a time when you had to present complex information to a non-technical audience. How did you tailor your communication to ensure they understood the key takeaways?",
+            "template": "The candidate should describe the situation, the audience, the type of information presented, and the specific techniques they used to simplify and clarify the information (e.g., visual aids, analogies, storytelling). They should also explain how they assessed the audience's understanding and adapted their presentation accordingly.",
+            "criteria": "The answer should demonstrate the candidate's ability to communicate complex information effectively to a non-technical audience. The candidate should highlight the use of clear and concise language, visual aids, and other techniques to enhance understanding.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "14",
+            "question": "How would you approach structuring a consulting engagement focused on improving the profitability of a struggling retail chain?",
+            "template": "The candidate should outline a structured problem-solving approach, including defining the problem, developing hypotheses, gathering data, analyzing the data, and developing recommendations. They should identify key areas to investigate, such as revenue growth, cost reduction, and operational efficiency.",
+            "criteria": "The answer should demonstrate a clear understanding of the consulting process and the ability to structure complex problems into manageable components. The candidate should highlight the importance of data-driven decision-making and a focus on measurable results.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "15",
+            "question": "Explain the McKinsey 7S framework and provide an example of how it could be applied to assess the effectiveness of a company's organizational structure.",
+            "template": "The candidate should define each of the seven elements of the McKinsey 7S framework (Strategy, Structure, Systems, Shared Values, Skills, Style, Staff) and explain how they interrelate. They should then provide a specific example of how the framework could be used to identify areas for improvement in a company's organizational structure.",
+            "criteria": "The answer should demonstrate a thorough understanding of the McKinsey 7S framework and the ability to apply it to a specific organizational context. The candidate should provide concrete examples and logical reasoning to support their analysis.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "16",
+            "question": "You are tasked with analyzing a dataset to identify key trends in customer behavior. Describe your process, including the tools you would use and the types of analyses you would perform.",
+            "template": "The candidate should describe their process, including data cleaning and preparation, exploratory data analysis (EDA), feature engineering, and statistical modeling. They should mention specific tools like Python with libraries such as Pandas and Scikit-learn, or tools like SQL for data manipulation. The candidate should also mention visualization tools like Matplotlib, Seaborn, or Tableau/PowerBI.",
+            "criteria": "The answer should demonstrate a strong understanding of the data analysis process and the ability to select appropriate tools and techniques. The candidate should also demonstrate an understanding of common data analysis tasks such as outlier detection, correlation analysis, and regression analysis.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "17",
+            "question": "Describe a situation where you had to develop a creative solution to a business problem with limited resources. What was your approach, and what was the outcome?",
+            "template": "The candidate should describe the problem, the resource constraints, the creative solution they developed, and the steps they took to implement it. They should emphasize the problem-solving process and the ability to think outside the box.",
+            "criteria": "The answer should highlight the candidate's creativity, resourcefulness, and ability to overcome challenges with limited resources. The candidate should also demonstrate the ability to communicate their solution effectively.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "18",
+            "question": "Let's say a client's market share has been declining for the past three years. How would you approach identifying the root causes of this decline and developing a turnaround strategy?",
+            "template": "The candidate should outline a structured problem-solving approach, including conducting internal and external analysis. They should identify key areas to investigate such as changes in customer preferences, competitive landscape, product offerings, and pricing strategies. They should emphasize data collection and analysis to support their recommendations.",
+            "criteria": "The answer should demonstrate a strong understanding of market dynamics and the ability to develop a data-driven turnaround strategy. The candidate should highlight the importance of identifying root causes and developing actionable recommendations.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "19",
+            "question": "Imagine you are leading a project for a major retail client aimed at optimizing their supply chain. During the initial data analysis, you discover a significant discrepancy between the client's reported inventory levels and the actual stock. This discrepancy, if unaddressed, could severely impact the project's outcome and the client's operations. The client, however, is hesitant to acknowledge the issue, citing potential disruptions to their ongoing promotions. How would you approach this situation to ensure the project's success while maintaining a strong client relationship?",
+            "template": "The candidate should demonstrate a structured approach involving: 1) Acknowledging the client's concerns and empathizing with their perspective. 2) Presenting the discrepancy clearly and concisely, highlighting the potential risks and impact on the project's goals and their business. 3) Proposing a collaborative approach to investigate the discrepancy further, involving relevant stakeholders from both the BCG team and the client's organization. 4) Suggesting potential solutions and mitigation strategies, emphasizing the benefits of addressing the issue proactively. 5) Maintaining open and transparent communication throughout the process, ensuring the client feels informed and involved.",
+            "criteria": "The answer will be judged based on the candidate's ability to: 1) Balance the need to address a critical issue with the importance of maintaining a positive client relationship. 2) Demonstrate strong analytical and problem-solving skills. 3) Communicate effectively and persuasively, adapting their approach to the client's perspective. 4) Show initiative and propose practical solutions. 5) Exhibit professionalism and diplomacy in a challenging situation.",
+            "category": "Situation Based"
+        },
+        {
+            "id": "20",
+            "question": "Describe a time when you had to manage conflicting priorities on a project with a tight deadline. How did you approach the situation to ensure the successful completion of the project?",
+            "template": "The candidate should describe a situation where they faced conflicting priorities and a tight deadline. They should explain the steps they took to assess the priorities, which may involve consulting with stakeholders, analyzing the impact of each priority, and considering the available resources. They should then describe how they created a plan to manage the conflicting priorities, which may involve prioritizing tasks, delegating tasks, and managing their time effectively. Finally, they should describe how they monitored the progress of the project and made adjustments as needed to ensure its successful completion.",
+            "criteria": "The answer will be judged based on the candidate's ability to: 1) Clearly articulate the situation and the conflicting priorities. 2) Demonstrate a structured approach to assessing and prioritizing tasks. 3) Explain how they created a plan to manage the conflicting priorities and the tight deadline. 4) Describe how they monitored the progress of the project and made adjustments as needed. 5) Provide specific examples of actions they took and the results they achieved.",
+            "category": "Situation Based"
         }
     ]
 }
