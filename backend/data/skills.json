@@ -2,7 +2,7 @@
     "Python": [
         "1.What is the difference between deep and shallow copy?",
         "2.How can the ternary operators be used in python?",
-        "3.What is the function of \u201cself\u201d?",
+        "3.What is the function of \"self\"?",
         "4.What is the process of compilation and linking in python?",
         "5.Write a program to read and write the binary data using python?"
     ],
@@ -33,5 +33,54 @@
         "3.What is VLOOKUP in excel? How does the VLOOKUP function work?",
         "4.What distinguishes a function from a subroutine in VBA?",
         "5.Provide an illustration of the approximate match."
+    ],
+    "Mechanical": [
+        "1. Differentiate between a closed cycle and an open cycle gas turbine.",
+        "2. How do you determine the stress and strain in a material?",
+        "3. How do you ensure quality control in a manufacturing process?",
+        "4. What are the key factors to consider when selecting materials for a mechanical component?",
+        "5. What is the purpose of a differential in an automobile?"
+    ],
+    "Civil": [
+        "1. What is reinforced cement concrete?",
+        "2. Can you explain why curing is not required to be done by creating water pools and polyethylene sheets?",
+        "3. How to do simple curve setting by offset method?",
+        "4. Define and explain Atterberg's limit.",
+        "5. How are the freeway bridges built?"
+    ],
+    "Mining": [
+        "1. How can we do Underground working, how blasting system achieved in underground mines?",
+        "2. Which gas is present from blasting and how is it handled?",
+        "3. Describe your experience with mine ventilation systems and their importance in maintaining a safe working environment.",
+        "4. How do you approach the optimization of mining processes to improve efficiency and productivity?",
+        "5. What methods do you use to assess the economic viability of a mining project?"
+    ],
+    "Electrical": [
+        "1. Why do transformers operate at constant frequency, and what happens if the supply frequency changes?",
+        "2. Why are high-voltage transmission lines preferred for power transmission? Derive the equation for power loss in a transmission line.",
+        "3. Explain the Ferranti effect in transmission lines. How does it impact voltage regulation?",
+        "4. What are sub-transient, transient, and steady-state reactance in synchronous machines? How do they affect fault analysis?",
+        "5. Why do we use a rotating magnetic field in induction motors instead of a stationary one? Explain mathematically."
+    ],
+    "ECE": [
+        "1. What is the difference between a microcontroller and a DSP? Where would you use each?",
+        "2. In an embedded system, how would you optimize power consumption in a battery-powered device?",
+        "3. Explain setup time and hold time violations in digital circuits. How do they impact flip-flop operation?",
+        "4. How would you design a UART communication protocol in an FPGA using VHDL/Verilog?",
+        "5. What is the significance of clock gating in low-power VLSI design?"
+    ],
+    "Chemical": [
+        "1. Explain the difference between a unit operation and a unit process.",
+        "2. What do you understand of the term 'heat exchangers' and what are their applications?",
+        "3. How do you handle hazardous chemicals in a chemical plant?",
+        "4. Explain the principles of mass transfer and give an example of its application.",
+        "5. Describe your understanding of the term 'flow control'."
+    ],
+    "Metallurgy": [
+        "1. What is the difference between ferritic, austenitic, martensitic, and duplex stainless steels? Explain their typical applications.",
+        "2. What is powder metallurgy, and where is it typically used? Describe the process briefly.",
+        "3. How would you analyze a metal fatigue issue? Outline the steps you would take to address it.",
+        "4. What elements are typically added to steel to improve its corrosion resistance, and why?",
+        "5. How do you ensure quality control in metallurgical processes? Mention specific methods or techniques."
     ]
 }

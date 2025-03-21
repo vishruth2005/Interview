@@ -6,6 +6,8 @@ import tempfile
 from dotenv import load_dotenv
 import time
 from elevenlabs import ElevenLabs
+from google.cloud import texttospeech
+from groq import Groq
 
 load_dotenv()
 
@@ -29,6 +31,43 @@ def text_to_speech_elevenlabs(text_to_speak: str) -> str:
             
     except Exception as e:
         st.error(f"Error generating speech: {str(e)}")
+        return None
+
+def text_to_speech_gemini(text_to_speak: str) -> str:
+    """Generate audio from text using Google Cloud Text-to-Speech API."""
+    try:
+        # Instantiate the client
+        client = texttospeech.TextToSpeechClient()
+        
+        # Set the text input to be synthesized
+        synthesis_input = texttospeech.SynthesisInput(text=text_to_speak)
+        
+        # Build the voice request
+        voice = texttospeech.VoiceSelectionParams(
+            language_code="en-US", 
+            ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
+        )
+        
+        # Select the type of audio file
+        audio_config = texttospeech.AudioConfig(
+            audio_encoding=texttospeech.AudioEncoding.MP3
+        )
+        
+        # Perform the text-to-speech request
+        response = client.synthesize_speech(
+            input=synthesis_input, 
+            voice=voice, 
+            audio_config=audio_config
+        )
+        
+        # Create a temporary file with a .mp3 extension
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            # Write the response binary audio content to file
+            temp_file.write(response.audio_content)
+            return temp_file.name
+            
+    except Exception as e:
+        st.error(f"Error generating speech with Google Cloud: {str(e)}")
         return None
 
 def speech_to_text_assemblyai(audio_bytes) -> str:
@@ -90,6 +129,49 @@ def speech_to_text_assemblyai(audio_bytes) -> str:
             
     except Exception as e:
         st.error(f"Error in speech to text conversion: {str(e)}")
+        return None
+
+def speech_to_text_groq(audio_bytes) -> str:
+    """Transcribe spoken responses to text using Groq's Whisper model."""
+    try:
+        # Create a temporary file to store the audio
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            # Handle different input types (UploadedFile vs bytes)
+            if hasattr(audio_bytes, 'read'):
+                # If it's a file-like object (like UploadedFile)
+                audio_content = audio_bytes.read()
+                temp_file.write(audio_content)
+            else:
+                # If it's already bytes
+                temp_file.write(audio_bytes)
+                
+            temp_file_path = temp_file.name
+        
+        # Initialize the Groq client
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        
+        # Open the audio file and transcribe it
+        with open(temp_file_path, "rb") as file:
+            audio_content = file.read()
+            
+            # Create a transcription of the audio file
+            # The API expects a tuple with (filename, content) where filename includes extension
+            transcription = client.audio.transcriptions.create(
+                file=(os.path.basename(temp_file_path), audio_content),  # Pass as (filename, content) tuple
+                model="distil-whisper-large-v3-en",  # Model to use
+                language="en",  # Language (English)
+                response_format="json",  # Response format
+                temperature=0.0  # Temperature (0 for most accurate)
+            )
+        
+        # Cleanup the temp file
+        cleanup_audio_file(temp_file_path)
+        
+        # Return the transcription text
+        return transcription.text
+        
+    except Exception as e:
+        st.error(f"Error in Groq speech to text conversion: {str(e)}")
         return None
 
 def cleanup_audio_file(file_path: str):

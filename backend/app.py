@@ -12,7 +12,7 @@ from streamlit import session_state
 from Agents.QuestionGenerator import QuestionGenerator
 from Agents.ResumeBuilder import ResumeBuilder
 import time
-from utils.voice_utils import text_to_speech_elevenlabs, speech_to_text_assemblyai, cleanup_audio_file
+from utils.voice_utils import text_to_speech_elevenlabs, speech_to_text_assemblyai, cleanup_audio_file, text_to_speech_gemini, speech_to_text_groq
 from fpdf import FPDF
 from datetime import datetime
 import base64
@@ -1037,7 +1037,7 @@ def main():
                         # Generate welcome audio with compact player
                         if 'welcome_played' not in st.session_state:
                             welcome_text = """Welcome to your AI Interview!"""
-                            audio_file = text_to_speech_elevenlabs(welcome_text)
+                            audio_file = text_to_speech_gemini(welcome_text)
                             if audio_file:
                                 col1, col2, col3 = st.columns([4, 4, 4])
                                 with col2:
@@ -1081,7 +1081,7 @@ def main():
                         
                         # Audio player for the question
                         if 'last_question' not in st.session_state or st.session_state.last_question != current_question:
-                            audio_file = text_to_speech_elevenlabs(current_question)
+                            audio_file = text_to_speech_gemini(current_question)
                             if audio_file:
                                 st.markdown('<div class="audio-player-container">', unsafe_allow_html=True)
                                 st.audio(audio_file, format='audio/mp3')
@@ -1115,7 +1115,7 @@ def main():
                                     st.session_state.audio_messages = {}
                                 
                                 if message_id not in st.session_state.audio_messages:
-                                    audio_file = text_to_speech_elevenlabs(message["content"])
+                                    audio_file = text_to_speech_gemini(message["content"])
                                     if audio_file:
                                         st.session_state.audio_messages[message_id] = audio_file
                                 
@@ -1196,7 +1196,7 @@ def main():
                                     
                                     if audio_bytes:
                                         with st.spinner("Transcribing your answer..."):
-                                            transcribed_text = speech_to_text_assemblyai(audio_bytes)
+                                            transcribed_text = speech_to_text_groq(audio_bytes)
                                             if transcribed_text:
                                                 st.session_state.messages.append({"role": "user", "content": transcribed_text})
                                                 st.session_state.show_recorder = False  # Reset recorder state
@@ -1270,7 +1270,7 @@ def process_response(user_input: str, content_container):
             if 'audio_messages' not in st.session_state:
                 st.session_state.audio_messages = {}
             
-            audio_file = text_to_speech_elevenlabs(response_text)
+            audio_file = text_to_speech_gemini(response_text)
             if audio_file:
                 st.session_state.audio_messages[message_id] = audio_file
         
@@ -1317,7 +1317,7 @@ def handle_correct_answer(content_container):
     st.session_state.messages.append({"role": "assistant", "content": transition_msg})
     
     # Generate and play transition audio
-    audio_file = text_to_speech_elevenlabs(transition_msg)
+    audio_file = text_to_speech_gemini(transition_msg)
     if audio_file:
         with content_container.chat_message("assistant"):
             st.markdown(transition_msg)
@@ -1378,7 +1378,7 @@ def handle_wrong_answer(content_container):
     st.session_state.messages.append({"role": "assistant", "content": transition_msg})
     
     # Generate and play transition audio
-    audio_file = text_to_speech_elevenlabs(transition_msg)
+    audio_file = text_to_speech_gemini(transition_msg)
     if audio_file:
         with content_container.chat_message("assistant"):
             st.markdown(transition_msg)
