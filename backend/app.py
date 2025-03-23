@@ -17,6 +17,7 @@ from fpdf import FPDF
 from datetime import datetime
 import base64
 import io
+from Agents.document import CheatsheetGenerator
 
 load_dotenv()
 
@@ -921,7 +922,7 @@ def main():
                     col1, col2, col3 = st.columns([1, 2, 1])
                     
                     with col2:
-                        if st.button("Generate Questions", key="generate_questions_btn", type="primary"):
+                        if st.button("Prepare Interview", key="prepare_interview_btn", type="primary"):
                             if role and company and resume_file:
                                 st.session_state.form_data = {
                                     'role': role,
@@ -931,6 +932,46 @@ def main():
                                 st.session_state.preparing_interview = True
                                 st.session_state.interview_ready = True
                                 st.rerun()
+                            else:
+                                st.error("Please enter role, company, and upload your resume.")
+                        
+                        if st.button("Prepare Cheatsheet", key="prepare_cheatsheet_btn", type="primary"):
+                            if role and company and resume_file:
+                                # Show progress bar
+                                progress_bar = st.progress(0)
+                                st.write("Generating your interview cheatsheet...")
+                                
+                                # Extract resume content
+                                resume_content = extract_text_from_pdf(resume_file)
+                                
+                                # Initialize cheatsheet generator
+                                cheatsheet_gen = CheatsheetGenerator(resume_content, role, company)
+                                
+                                # Update progress
+                                progress_bar.progress(30)
+                                st.write("Analyzing resume and generating Q&A pairs...")
+                                
+                                # Generate cheatsheet data
+                                cheatsheet_data = cheatsheet_gen.generate_cheatsheet()
+                                
+                                # Update progress
+                                progress_bar.progress(70)
+                                st.write("Creating PDF document...")
+                                
+                                # Generate PDF
+                                pdf_buffer = cheatsheet_gen.generate_pdf(cheatsheet_data)
+                                
+                                # Update progress
+                                progress_bar.progress(100)
+                                st.write("Cheatsheet ready!")
+                                
+                                # Provide download button
+                                st.download_button(
+                                    label="Download Interview Cheatsheet",
+                                    data=pdf_buffer,
+                                    file_name="interview_cheatsheet.pdf",
+                                    mime="application/pdf"
+                                )
                             else:
                                 st.error("Please enter role, company, and upload your resume.")
                         
