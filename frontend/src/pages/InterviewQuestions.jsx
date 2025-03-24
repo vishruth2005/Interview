@@ -42,9 +42,6 @@ function InterviewQuestions() {
   };
   
   
-  
-  
-
   const handleNextQuestion = () => {
     const requestOptions = {
       method: "GET",
@@ -97,21 +94,31 @@ function InterviewQuestions() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Question {questionId}:{currentQuestion}
-            </h2>
-            <p className="text-gray-700 text-lg">
-              
-            </p>
-          </div>
+        <div className="mb-8">
+  {questionId === 0 && (
+    <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg shadow-md mb-4">
+      <h3 className="text-lg font-semibold text-blue-800">Welcome to the AI Interview System</h3>
+      <p className="text-gray-700 mt-2">
+        - Answer questions clearly and concisely. <br />
+        - Ensure your responses are structured and relevant to the topic. <br />
+        - Good luck with your interview!
+      </p>
+    </div>
+  )}
+  {questionId!==0 && (
+  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+    Question {questionId}: {currentQuestion}
+  </h2>
+  )}
+  <p className="text-gray-700 text-lg"></p>
+</div>
 
           <div className="mb-6">
             <textarea
               className="input-field h-32"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Type your answer here..."
+              placeholder={questionId==0 ? "Please type- 'I will follow all the instructions'" : "Type your answer help"}
             />
           </div>
 
