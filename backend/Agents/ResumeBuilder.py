@@ -49,9 +49,8 @@ def to_json(data_string):
 
 class ResumeBuilder:
     
-    def __init__(self, repos, linkedin_profile_url, role):
+    def __init__(self, repos, linkedin_profile_data, role):
         self.access_token = os.getenv("GITHUB_ACCESS_TOKEN")
-        self.linkedin_profile_url = linkedin_profile_url
         self.role = role
         self.agent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), markdown=True)
         self.projectagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Projects)
@@ -60,37 +59,7 @@ class ResumeBuilder:
         self.github_client = self.authenticate()
         self.repo_list = repos
         self.parsed_readmes = {}  # Store parsed READMEs in the class
-        # self.profile = {'name': 'Vishruth Srivatsa', 'occupation': "Executive member at Web Enthusiasts'\u200b Club NITK", 'experiences': [{'company': "Web Enthusiasts'\u200b Club NITK", 'title': 'Executive member', 'description': "-Participated in Unfold'24 hackathon organized by Devfolio and built a project called JusticeChain\n-Participated in EthIndia'2k24 and won the pool prize of CDP for building a project called AIgentX\n-Participated in Hackverse 5.0 and won the Fintech track for building a project called Viresco\n-Took a research paper discussion on Combating Adversial Attacks using Robust Word Recognition Model"}, {'company': 'IEEE', 'title': 'Executive member', 'description': '- Organised an event called BlackBox and held a talk on machine learning for first years.'}, {'company': 'Genesis NITK', 'title': 'Executive member', 'description': '- Participated in several college level dance competitions\n- Won second place in college level group dance competition as part of Genesis crew'}], 'education': [{'start': '1 8 2023', 'end': '30 4 2027', 'field_of_study': 'Computational And Data Science', 'degree_name': 'Bachelor of Technology - BTech', 'school': 'National Institute of Technology Karnataka'}, {'start': '1 6 2021', 'end': '30 4 2023', 'field_of_study': 'Science', 'degree_name': 'Higher Secondary Education', 'school': 'BASE PU College'}]}
-
-    def fetch_linkedin_profile(self):
-        async def get_filtered_profile_data(profile_url):
-            proxycurl = Proxycurl(os.getenv("PROXYCURL_API_KEY"))
-            profile_data = await proxycurl.linkedin.person.get(linkedin_profile_url=profile_url)
-
-            # Filter the relevant data
-            filtered_data = {
-                "name": profile_data['full_name'],
-                "occupation": profile_data['occupation'],
-                "experiences": [
-                    {
-                        "company": exp['company'],
-                        "title": exp['title'],
-                        "description": exp['description']
-                    } for exp in profile_data['experiences'] if exp.get('description')
-                ],
-                "education": [
-                    {
-                        "start": str(edu['starts_at']['day']) + '-' + str(edu['starts_at']['month']) + '-' + str(edu['starts_at']['year']),
-                        "end": str(edu['ends_at']['day']) + '-' + str(edu['ends_at']['month']) + '-' + str(edu['ends_at']['year']),
-                        "field_of_study": edu['field_of_study'],
-                        "degree_name": edu['degree_name'],
-                        "school": edu["school"]
-                    } for edu in profile_data['education']
-                ]
-            }
-            return filtered_data
-
-        self.profile = asyncio.run(get_filtered_profile_data(self.linkedin_profile_url))
+        self.profile = linkedin_profile_data  # Use the provided LinkedIn profile data
 
     def authenticate(self) -> Github:
         """Authenticate with GitHub using the provided access token."""
@@ -274,7 +243,6 @@ class ResumeBuilder:
         self.parse_readmes()
         resume_result = self.build_projects()
         skills_result = self.build_skills()
-        self.fetch_linkedin_profile()
         linked_in = self.use_linked_in()
 
         return resume_result, skills_result, linked_in
