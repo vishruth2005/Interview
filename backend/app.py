@@ -573,6 +573,39 @@ st.markdown("""
     .stChatInput {
         margin-bottom: 10px;
     }
+
+    /* Timer styling */
+    .timer-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #ffffff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 18px;
+        font-weight: 600;
+        border: 2px solid #e5e7eb;
+    }
+
+    .timer-warning {
+        color: #ef4444;
+        animation: pulse 2s infinite;
+    }
+
+    .timer-normal {
+        color: #1f2937;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -689,6 +722,7 @@ def initialize_agent(question: str, template: str, criteria: str) -> Agent:
             "Once you determine that a candidate's answer meets the necessary criteria—demonstrating sufficient understanding, relevance, and detail—respond with 'correct' without any unnecessary text. "
             "Do not include any unnecessary text or commentary in your response; keep it concise and focused solely on the evaluation outcome."
             "If a satisfactory answer is provided, respond with 'correct' without any unnecessary text. "
+            "Dont be very strict on your evaluation. if the user touches even 60% of the expected answer, respond with 'correct' without any unnecessary text. "
             "If a satisfactory answer is not provided within 3 attempts, respond with 'wrong' without any unnecessary text."
         ),
         debug_mode=True
@@ -706,8 +740,45 @@ def load_questions():
         st.error("Invalid JSON format in questions file.")
         return []
 
+def check_interview_time():
+    """Check if interview time limit is reached."""
+    if st.session_state.interview_start_time:
+        elapsed_time = time.time() - st.session_state.interview_start_time
+        minutes_remaining = 30 - (elapsed_time / 60)
+        
+        if minutes_remaining <= 5 and not st.session_state.interview_ended:
+            st.session_state.interview_ended = True
+            return True
+    return False
+
+def handle_interview_end():
+    """Handle the end of interview transition."""
+    end_message = "Thank you for completing the interview! Let's proceed to your performance report."
+    st.session_state.messages.append({"role": "assistant", "content": end_message})
+    
+    # Generate and play end message audio
+    audio_file = text_to_speech_gemini(end_message)
+    if audio_file:
+        message_id = f"msg_{hash(end_message)}"
+        if 'audio_messages' not in st.session_state:
+            st.session_state.audio_messages = {}
+        st.session_state.audio_messages[message_id] = audio_file
+    
+    # Wait for 3 seconds before transitioning to report page
+    time.sleep(3)
+    st.session_state.page = 'report'
+    st.rerun()
+
 def select_and_initialize_next_question():
     """Select and initialize the next question."""
+    # Start the timer when first question is selected
+    if st.session_state.interview_start_time is None:
+        st.session_state.interview_start_time = time.time()
+        
+    # Check if interview time limit is reached
+    if check_interview_time():
+        return None
+        
     questions = load_questions()
     question_categories = {q['id']: q['category'] for q in questions}
     next_question = st.session_state.question_selector.select_next_question(
@@ -774,6 +845,13 @@ def display_resume_data(resume_result, skills_result, linked_in):
     st.markdown(skills_result)
     st.markdown(resume_result)  # Display the concatenated string as markdown
 
+def format_time_remaining(elapsed_time):
+    """Format the remaining time in MM:SS format."""
+    total_seconds = max(1800 - int(elapsed_time), 0)  # 30 minutes = 1800 seconds
+    minutes = total_seconds // 60
+    seconds = total_seconds % 60
+    return f"{minutes:02d}:{seconds:02d}"
+
 def main():
     # Initialize session state variables if they don't exist
     if 'page' not in st.session_state:
@@ -801,9 +879,15 @@ def main():
             'resume_file': None
         }
     if 'question_history' not in st.session_state:
-        st.session_state.question_history = []  # List of all questions asked with their details
+        st.session_state.question_history = []
     if 'all_messages' not in st.session_state:
-        st.session_state.all_messages = {}  # Map of question_id to all messages for that question
+        st.session_state.all_messages = {}
+    if 'interview_start_time' not in st.session_state:
+        st.session_state.interview_start_time = None
+    if 'interview_ended' not in st.session_state:
+        st.session_state.interview_ended = False
+    if 'timer_visible' not in st.session_state:
+        st.session_state.timer_visible = False
 
     col1, col2, col3 = st.columns([1, 2, 1])
     
@@ -1035,8 +1119,16 @@ def main():
                 st.rerun()
 
             elif st.session_state.interview_started:
+                # Set interview start time if not set
+                if st.session_state.interview_start_time is None:
+                    st.session_state.interview_start_time = time.time()
+                
                 # Interview in progress
                 if st.session_state.current_question:
+                    # Check if interview should end after current question
+                    if st.session_state.interview_ended and not st.session_state.messages:
+                        handle_interview_end()
+                    
                     # Container for all content except chat input
                     content_container = st.container()
                     
@@ -1106,8 +1198,43 @@ def main():
                                     min-height: 80vh;
                                     background-color: #ffffff;
                                 }
+                                .timer-container {
+                                    position: fixed;
+                                    top: 20px;
+                                    right: 20px;
+                                    background-color: #ffffff;
+                                    padding: 10px 15px;
+                                    border-radius: 8px;
+                                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                                    z-index: 1000;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 5px;
+                                }
+                                .timer-warning {
+                                    color: #ef4444;
+                                }
+                                .timer-normal {
+                                    color: #1f2937;
+                                }
                             </style>
                         """, unsafe_allow_html=True)
+                        
+                        # Add timer display
+                        elapsed_time = time.time() - st.session_state.interview_start_time
+                        time_remaining = format_time_remaining(elapsed_time)
+                        minutes_remaining = (1800 - int(elapsed_time)) / 60
+                        
+                        timer_class = "timer-warning" if minutes_remaining <= 5 else "timer-normal"
+                        st.markdown(
+                            f"""
+                            <div class="timer-container">
+                                <span>⏱️</span>
+                                <span class="{timer_class}">{time_remaining}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
                         
                         st.markdown('<div class="chat-container">', unsafe_allow_html=True)
                         
