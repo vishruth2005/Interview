@@ -839,10 +839,12 @@ def generate_questions(role, company, resume_content):
 
 def display_resume_data(resume_result, skills_result, linked_in):
     """Display the resume data in markdown format."""
-    # Display the concatenated resume string in the frontend
-    st.markdown(linked_in)
-    st.markdown("## Skills")
-    st.markdown(skills_result)
+    # Clear previous output
+    st.markdown(linked_in)  # Display LinkedIn profile data
+
+    st.markdown("##  Skills")
+    st.markdown(skills_result)  # Display skills in a clean format
+
     st.markdown(resume_result)  # Display the concatenated string as markdown
 
 def format_time_remaining(elapsed_time):
@@ -944,7 +946,54 @@ def main():
         elif st.session_state.page == 'resume':
             st.header("Resume Builder")
             
-            linkedin_url = st.text_input("Enter your LinkedIn profile URL:")
+            # Separate input fields for LinkedIn profile data
+            linkedin_name = st.text_input("Enter your full name:")
+            linkedin_occupation = st.text_input("Enter your occupation:")
+            
+            # Initialize session state for experiences and education if not already done
+            if 'experiences' not in st.session_state:
+                st.session_state.experiences = []
+            if 'educations' not in st.session_state:
+                st.session_state.educations = []
+
+            # Input fields for experiences
+            st.markdown("### Experiences")
+            for i, experience in enumerate(st.session_state.experiences):
+                st.markdown(f"**Experience {i + 1}**")
+                company = st.text_input(f"Company Name {i + 1}:", value=experience.get('company', ''), key=f"company_{i}")
+                title = st.text_input(f"Title {i + 1}:", value=experience.get('title', ''), key=f"title_{i}")
+                description = st.text_area(f"Description {i + 1}:", value=experience.get('description', ''), key=f"description_{i}")
+                st.session_state.experiences[i] = {
+                    "company": company,
+                    "title": title,
+                    "description": description
+                }
+            
+            # Button to add more experiences
+            if st.button("Add Experience"):
+                st.session_state.experiences.append({"company": "", "title": "", "description": ""})
+                st.rerun()  # Rerun to display new fields
+
+            # Input fields for education
+            st.markdown("### Education")
+            for i, education in enumerate(st.session_state.educations):
+                st.markdown(f"**Education {i + 1}**")
+                degree = st.text_input(f"Degree {i + 1}:", value=education.get('degree', ''), key=f"degree_{i}")
+                institution = st.text_input(f"Institution {i + 1}:", value=education.get('institution', ''), key=f"institution_{i}")
+                start_date = st.text_input(f"Start Date {i + 1}:", value=education.get('start_date', ''), key=f"start_date_{i}")
+                end_date = st.text_input(f"End Date {i + 1}:", value=education.get('end_date', ''), key=f"end_date_{i}")
+                st.session_state.educations[i] = {
+                    "degree": degree,
+                    "institution": institution,
+                    "start_date": start_date,
+                    "end_date": end_date
+                }
+            
+            # Button to add more education
+            if st.button("Add Education"):
+                st.session_state.educations.append({"degree": "", "institution": "", "start_date": "", "end_date": ""})
+                st.rerun()  # Rerun to display new fields
+            
             role = st.text_input("Enter the role you're targeting:")
             
             # Multiple GitHub repos input
@@ -967,13 +1016,16 @@ def main():
                     st.rerun()
             
             if st.button("Generate Resume"):
-                if linkedin_url and role and repos:
+                if linkedin_name and linkedin_occupation and st.session_state.experiences and st.session_state.educations and role and repos:
+                    linkedin_profile_data = {
+                        "full_name": linkedin_name,
+                        "occupation": linkedin_occupation,
+                        "experiences": st.session_state.experiences,
+                        "education": st.session_state.educations
+                    }
                     with st.spinner("Building your resume..."):
-                        resume_builder = ResumeBuilder(repos, linkedin_url, role)
+                        resume_builder = ResumeBuilder(repos, linkedin_profile_data, role)
                         resume_result, skills_result, linked_in = resume_builder.build()
-                        print(resume_result)
-                        print(skills_result)
-                        print(linked_in)
                         display_resume_data(resume_result, skills_result, linked_in)
                         st.success("Resume generated successfully!")
                 else:
