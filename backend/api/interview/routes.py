@@ -20,7 +20,7 @@ current_agent = None # Global agent instance
 questions = [] #Global list of questions
 
 def to_json(data_string):
-    json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
+    json_data = json.loads('[' + data_string.replace('}\n{', '}, {') + ']')
     return json.dumps(json_data, indent=4)
 
 # Global QuestionGenerator instance

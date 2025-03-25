@@ -610,7 +610,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def to_json(data_string):  
-    json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
+    json_data = json.loads('[' + data_string.replace('}\n{', '}, {') + ']')
     return json.dumps(json_data, indent=4)
 
 def extract_text_from_pdf(pdf_content):
