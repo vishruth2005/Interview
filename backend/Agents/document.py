@@ -45,6 +45,14 @@ class LearningItem(BaseModel):
 class ThingsToLearn(BaseModel):
     items: List[LearningItem] = Field(..., description="List of things to learn")
 
+class CompanyInfoCategory(BaseModel):
+    title: str = Field(..., description="Title of the company information category")
+    content: str = Field(..., description="Detailed content about this aspect of the company")
+
+class CompanyInformation(BaseModel):
+    overview: str = Field(..., description="General overview of the company")
+    categories: List[CompanyInfoCategory] = Field(..., description="Categorized company information")
+
 class CheatsheetGenerator:
     def __init__(self, resume_content, role, company):
         """Initialize with resume content, role, and company."""
@@ -60,7 +68,7 @@ class CheatsheetGenerator:
                 "Your task is to create detailed question and answer pairs for skill-based interview questions."
             ),
             instructions=[
-                "Generate 10 skill-based interview question and answer pairs.",
+                "Generate 15 skill-based interview question and answer pairs.",
                 "Each question should focus on a different technical or professional skill relevant to the role.",
                 "Provide a comprehensive, well-structured answer for each question that demonstrates mastery of the skill.",
                 "Ensure answers include concrete examples and demonstrate depth of knowledge.",
@@ -78,7 +86,7 @@ class CheatsheetGenerator:
                 "Your task is to create detailed project-based question and answer pairs based on resume content."
             ),
             instructions=[
-                "Generate 10 project-based interview question and answer pairs.",
+                "Generate 15 project-based interview question and answer pairs.",
                 "Analyze the resume to identify specific projects to focus questions on.",
                 "Create questions that probe technical details, challenges faced, and outcomes achieved.",
                 "Provide detailed answers that highlight technical skills, problem-solving abilities, and achievements.",
@@ -96,7 +104,7 @@ class CheatsheetGenerator:
                 "Your task is to create detailed theoretical question and answer pairs."
             ),
             instructions=[
-                "Generate 10 theoretical interview question and answer pairs.",
+                "Generate 15 theoretical interview question and answer pairs.",
                 "Questions should focus on fundamental concepts and principles relevant to the role and industry.",
                 "Provide technically accurate answers that demonstrate deep understanding of concepts.",
                 "Include relevant examples, use cases, or applications in the answers.",
@@ -117,7 +125,7 @@ class CheatsheetGenerator:
             show_tool_calls=True,
             instructions=[
                 "You are a human resource expert with access to the internet."
-                "Generate 10 behavioral interview question and answer pairs.",
+                "Generate 15 behavioral interview question and answer pairs.",
                 "Use the internet to find the company's policy and culture and harness that to generate behavioural and HR questions",
                 "As human resource answers are subjective, instead of hard answers, provide a possible way in which the person can answer."
                 "Questions should cover different aspects of professional behavior and soft skills.",
@@ -175,6 +183,38 @@ class CheatsheetGenerator:
             ],
             response_model=ThingsToLearn
         )
+        
+        # Agent for retrieving company-specific information
+        self.company_info_generator = Agent(
+            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            tools=[DuckDuckGo()],
+            description=(
+                "You are an expert corporate researcher specializing in gathering comprehensive information about companies. "
+                "Your task is to research and compile detailed information about a specific company "
+                "focusing on its policies, values, culture, and other company-specific aspects."
+            ),
+            show_tool_calls=True,
+            instructions=[
+                "Research and compile comprehensive information about the specified company.",
+                "Focus exclusively on company-specific policies, values, and cultural aspects (NOT universal or generic ones).",
+                "Use DuckDuckGo to search for detailed information about the company's:",
+                "1. Corporate culture and values",
+                "2. Work environment and employee policies",
+                "3. Diversity and inclusion initiatives",
+                "4. Organizational structure and leadership philosophy",
+                "5. Corporate social responsibility and ethical standards",
+                "6. Recent company news, developments, or challenges",
+                "7. Career development and growth opportunities",
+                "For each category of information:",
+                "- Provide detailed, concrete details specific to this company",
+                "- Cite specific examples, practices, or statements from company sources",
+                "- Avoid generic descriptions that could apply to any company",
+                "- Ensure all information is fact-based and comes from reliable sources",
+                "Format the response with a general company overview followed by categorized information sections.",
+                "Make all information directly relevant to interview preparation"
+            ],
+            response_model=CompanyInformation
+        )
 
     def generate_skill_qa_pairs(self):
         """Generate skill-based question and answer pairs."""
@@ -218,9 +258,22 @@ class CheatsheetGenerator:
             f"Generate comprehensive interview tips for a {self.role} position at {self.company}. "
             "Organize the tips into distinct categories such as 'Communication', 'Body Language', "
             "'Technical Preparation', 'Company Research', etc. For each category, provide 3-5 specific, "
-            "actionable tips. Format the response as a structured list of categories and their tips."
+            "actionable tips.make sure you make the tips robust and detailed. provide examples for each tip. Format the response as a structured list of categories and their tips."
         )
         run: RunResponse = self.interview_tips_generator.run(prompt)
+        return run.content
+
+    def generate_company_information(self):
+        """Generate detailed information about the company."""
+        prompt = (
+            f"Research and provide detailed information about {self.company}, with a focus on "
+            f"company-specific policies, values, and cultural aspects that would be relevant for "
+            f"a candidate interviewing for a {self.role} position. Focus on what makes this company "
+            f"unique and avoid generic information that could apply to any company. Use DuckDuckGo to "
+            f"find specific, factual information about the company's culture, values, work environment, "
+            f"leadership, recent developments, and other relevant aspects."
+        )
+        run: RunResponse = self.company_info_generator.run(prompt)
         return run.content
 
     def generate_learning_recommendations(self):
@@ -243,6 +296,7 @@ class CheatsheetGenerator:
         theoretical_qa = self.generate_theoretical_qa_pairs()
         behavioral_qa = self.generate_behavioral_qa_pairs()
         interview_tips = self.generate_interview_tips()
+        company_info = self.generate_company_information()
         learning_recommendations = self.generate_learning_recommendations()
         
         # Compile data for JSON storage
@@ -251,6 +305,10 @@ class CheatsheetGenerator:
             "role": self.role,
             "qa_pairs": [],
             "interview_tips": {
+                "categories": []
+            },
+            "company_information": {
+                "overview": "",
                 "categories": []
             },
             "things_to_learn": []
@@ -301,6 +359,18 @@ class CheatsheetGenerator:
                     "points": [str(interview_tips)]
                 }]
         
+        # Process company information
+        if hasattr(company_info, 'overview') and hasattr(company_info, 'categories'):
+            cheatsheet_data["company_information"]["overview"] = company_info.overview
+            cheatsheet_data["company_information"]["categories"] = [
+                {"title": cat.title, "content": cat.content}
+                for cat in company_info.categories
+            ]
+        else:
+            # Fallback for company information
+            cheatsheet_data["company_information"]["overview"] = "Company information not available."
+            cheatsheet_data["company_information"]["categories"] = []
+        
         # Process learning recommendations
         if hasattr(learning_recommendations, 'items'):
             cheatsheet_data["things_to_learn"] = [
@@ -322,6 +392,31 @@ class CheatsheetGenerator:
             if hasattr(qa_response, 'qa_pairs'):
                 pairs = qa_response.qa_pairs
             else:
+                # For Project-Based category, check if the response is a JSON string containing qa_pairs
+                if category == "Project-Based" and isinstance(qa_response, str):
+                    try:
+                        # Try to parse it as JSON
+                        import json
+                        parsed_json = json.loads(qa_response)
+                        
+                        # Check if it has the expected structure
+                        if isinstance(parsed_json, dict) and 'qa_pairs' in parsed_json and isinstance(parsed_json['qa_pairs'], list):
+                            # Convert each item to QuestionAnswer
+                            pairs = []
+                            for item in parsed_json['qa_pairs']:
+                                if 'question' in item and 'answer' in item:
+                                    pairs.append(QuestionAnswer(
+                                        question=item['question'],
+                                        answer=item['answer'],
+                                        category=category
+                                    ))
+                            if pairs:  # If we successfully parsed pairs, return them
+                                return pairs
+                    except (json.JSONDecodeError, KeyError, TypeError) as e:
+                        print(f"Error parsing project-based QA pairs: {e}")
+                        # Fall through to default handling if parsing fails
+                
+                # Default handling for other categories or if parsing failed
                 pairs = [QuestionAnswer(
                     question="Generated Question",
                     answer=qa_response,
@@ -467,6 +562,25 @@ class CheatsheetGenerator:
             content.append(Spacer(1, 15))
         
         content.append(Spacer(1, 20))
+        
+        # Add Company Information section
+        if "company_information" in cheatsheet_data and cheatsheet_data["company_information"]:
+            content.append(Paragraph("Company Information", styles['SectionHeader']))
+            content.append(Spacer(1, 10))
+            
+            # Add company overview
+            if cheatsheet_data["company_information"]["overview"]:
+                content.append(Paragraph("Company Overview", styles['QuestionText']))
+                content.append(Paragraph(cheatsheet_data["company_information"]["overview"], styles['AnswerText']))
+                content.append(Spacer(1, 15))
+            
+            # Add categorized company information
+            for category in cheatsheet_data["company_information"]["categories"]:
+                content.append(Paragraph(category["title"], styles['QuestionText']))
+                content.append(Paragraph(category["content"], styles['AnswerText']))
+                content.append(Spacer(1, 15))
+            
+            content.append(Spacer(1, 20))
         
         # Add Q&A sections by category with enhanced formatting
         categories = {}
