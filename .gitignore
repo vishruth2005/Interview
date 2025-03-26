@@ -36,3 +36,6 @@ tmp/
 .env
 *.db
 .DS_Store
+
+#ignoring the service account key
+serviceAccountKey.json
