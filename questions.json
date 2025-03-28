@@ -1,0 +1,74 @@
+{
+    "questions": [
+        {
+            "id": "1",
+            "question": "In your 'Docker Host Integration Tool' project, you mentioned using VPN technology to connect Docker hosts across networks. Can you elaborate on the specific VPN protocol you chose (e.g., OpenVPN, IPSec, WireGuard) and the rationale behind your selection? What were the key considerations in terms of security, performance, and ease of configuration?",
+            "template": "The candidate should discuss their choice of VPN protocol, highlighting its strengths and weaknesses relative to the project's requirements. They should demonstrate an understanding of the trade-offs between security, performance (latency, throughput), and configuration complexity. The ideal answer would involve specifics regarding encryption algorithms, authentication methods, and potential performance optimizations they implemented.",
+            "criteria": "The answer should demonstrate a solid understanding of VPN protocols and their characteristics. Key criteria include a clear explanation of the chosen protocol's advantages in the context of Docker host integration, awareness of potential security vulnerabilities, and an understanding of how to optimize performance in a VPN environment.",
+            "category": "Project Based"
+        },
+        {
+            "id": "2",
+            "question": "In your 'P2P Pulse' project, you implemented peer discovery using both trackers and DHT. Can you explain the difference between these two approaches for finding peers in a BitTorrent network? What are the advantages and disadvantages of each, and how did you handle the potential for tracker failure or DHT network instability in your implementation?",
+            "template": "The candidate should clearly differentiate between tracker-based and DHT-based peer discovery. They should discuss the centralized nature of trackers versus the decentralized nature of DHT, as well as the implications for scalability, censorship resistance, and fault tolerance. They should describe how their implementation handled tracker outages (e.g., multi-tracker support, fallback to DHT) and mitigated DHT instability (e.g., node caching, routing optimizations).",
+            "criteria": "The answer should demonstrate a thorough understanding of peer-to-peer networking concepts, particularly in the context of BitTorrent. Key criteria include an accurate explanation of tracker and DHT functionality, a discussion of their respective strengths and weaknesses, and a description of the techniques used to ensure reliable peer discovery.",
+            "category": "Project Based"
+        },
+        {
+            "id": "3",
+            "question": "In your 'Implementing Network Address Translation' project, you used Linux namespaces and iptables to create a simulated internet environment. Assume you need to support IPv6 in your setup. How would you adapt your iptables rules (considering the transition to nftables) and Linux namespace configuration to correctly handle IPv6 traffic and ensure proper NAT functionality for both IPv4 and IPv6 clients?",
+            "template": "The candidate should explain how to configure IPv6 addressing within the existing namespace setup. They need to mention the use of `ip6tables` or, ideally, `nftables` for IPv6 firewalling and NAT. They should discuss the differences in rule syntax between `iptables` and `nftables`, specifically focusing on how to achieve equivalent NAT functionality. Furthermore, they should consider the interaction between IPv4 and IPv6 traffic and propose solutions to maintain network isolation and security across both protocols. The ideal solution would involve the use of a dual-stack approach and considerations for IPv6 address assignment (e.g., using SLAAC or DHCPv6).",
+            "criteria": "The answer should demonstrate a strong understanding of IPv6 networking concepts, including addressing, routing, and security. Key criteria include the correct usage of `ip6tables` or `nftables` for IPv6 NAT and firewalling, awareness of IPv6-specific security considerations, and a clear explanation of how to integrate IPv6 into the existing namespace-based network topology. Knowledge of dual-stack configurations is highly desirable.",
+            "category": "Project Based"
+        },
+        {
+            "id": "4",
+            "question": "Explain how Docker networking facilitates communication between containers and the outside world, considering concepts like port mapping and network namespaces.",
+            "template": "The candidate should describe how Docker utilizes network namespaces to isolate containers and create virtual network interfaces. They should explain how port mapping exposes container services to the host and external networks. A good answer will touch on the different networking modes available in Docker (bridge, host, none, overlay).",
+            "criteria": "The answer should demonstrate understanding of Docker's networking architecture, including namespaces, virtual interfaces, and port mapping. Correct use of terminology is expected. Deeper understanding can be shown with a discussion on overlay networks or custom network configurations.",
+            "category": "Theory Based"
+        },
+        {
+            "id": "5",
+            "question": "What is the role of Goroutines in Go, and how do they contribute to achieving concurrency and parallelism in applications like a BitTorrent client?",
+            "template": "The candidate should explain that Goroutines are lightweight, concurrently executing functions in Go. They should mention that Goroutines are managed by the Go runtime and multiplexed onto a smaller number of OS threads. The answer should also explain how Goroutines, along with channels, facilitate concurrent operations like downloading different parts of a file simultaneously in a BitTorrent client, leading to improved download speeds.",
+            "criteria": "The answer should demonstrate understanding of concurrency vs parallelism, the role of Goroutines in achieving concurrency in Go, and how this is beneficial in network applications. Knowledge of channels and synchronization primitives improves the evaluation.",
+            "category": "Theory Based"
+        },
+        {
+            "id": "6",
+            "question": "Describe the purpose of Network Address Translation (NAT), and explain how it allows multiple devices on a private network to share a single public IP address.",
+            "template": "The candidate should define NAT as a technique that translates private IP addresses to a single public IP address, allowing multiple devices on a private network to share internet access. They should also explain the different types of NAT (e.g., SNAT, DNAT, PAT) and how they function. A strong answer will discuss the implications of NAT for network security and connectivity.",
+            "criteria": "The answer should clearly define NAT and its primary function. Understanding of different NAT types (SNAT, DNAT, PAT) and their specific uses is important. Knowledge of NAT traversal techniques or its impact on certain protocols (e.g., VoIP) can further distinguish the candidate.",
+            "category": "Theory Based"
+        },
+        {
+            "id": "7",
+            "question": "You're tasked with designing a highly scalable microservice using Go, deployed on Google Cloud Platform, that processes incoming data streams. Describe your approach, focusing on the technologies and design patterns you'd leverage to ensure high availability, fault tolerance, and efficient resource utilization. How would you handle potential networking bottlenecks and guarantee data consistency across distributed components?",
+            "template": "The candidate should outline a microservices architecture using Go, deployed on GCP (e.g., using Kubernetes on GKE). They should address scalability using techniques like horizontal scaling and load balancing. Fault tolerance mechanisms such as retries, circuit breakers, and dead-letter queues should be discussed. They should mention relevant GCP services like Cloud Pub/Sub for message queuing, Cloud Spanner or Cloud Datastore for data storage (discussing tradeoffs), and VPC for network isolation. The response should also cover networking best practices, potentially including service meshes like Istio, and data consistency strategies relevant to the chosen database.",
+            "criteria": "The response should demonstrate a strong understanding of microservices architecture, Go programming, and Google Cloud Platform services. The candidate should articulate a clear and comprehensive approach to scalability, fault tolerance, networking, and data consistency. Bonus points for discussing observability (monitoring, logging, tracing) and security considerations.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "8",
+            "question": "You are given a legacy C++ application running on a Linux server with iptables configured as the firewall. The application needs to be migrated to AWS, leveraging Docker containers. Outline the steps you would take to ensure a secure and seamless transition, focusing on networking aspects, security group configuration, and maintaining or improving the application's performance. Address any potential challenges related to iptables rules and how you would translate or adapt them within the AWS environment.",
+            "template": "The candidate should describe a migration strategy involving containerizing the C++ application using Docker. They should discuss creating a Dockerfile, building the image, and pushing it to a container registry (e.g., AWS ECR). On AWS, they should propose using services like ECS or EKS for container orchestration. A key aspect is how they handle the iptables rules. They should explain how to translate these rules into AWS Security Group rules, paying attention to the allowed ports, protocols, and source/destination IP ranges. The response should also cover network configuration (VPCs, subnets), load balancing (ALB/NLB), and security best practices for Docker containers on AWS (e.g., using least-privilege principles, scanning for vulnerabilities). Performance optimization strategies such as selecting appropriate instance types and leveraging AWS's networking infrastructure should also be mentioned.",
+            "criteria": "The response should demonstrate expertise in C++, Docker, Linux networking, and AWS services. The candidate should clearly articulate the steps involved in migrating the application, with a strong emphasis on security and networking considerations. The translation of iptables rules to AWS Security Groups should be accurate and comprehensive. Bonus points for discussing CI/CD integration and infrastructure-as-code (e.g., Terraform) for managing the AWS resources.",
+            "category": "Skill Based"
+        },
+        {
+            "id": "9",
+            "question": "During the development of the 'Docker Host Integration Tool', you focused on enabling centralized access to containers via a unified entry point. Imagine you are nearing the deployment phase, and you discover a significant security vulnerability that could compromise the entire system. This vulnerability requires a complete architectural redesign, potentially delaying the launch by several weeks. How would you approach this situation, balancing the need for security with the project's timeline, and what steps would you take to communicate this issue to your team and stakeholders?",
+            "template": "The candidate should demonstrate a strong understanding of security principles and risk management. They should outline a plan that includes immediate assessment of the vulnerability, exploration of alternative solutions (including temporary patches if feasible), a clear communication strategy to inform the team and stakeholders about the issue and the potential impact on the timeline, and a commitment to prioritizing security over speed. They should explain how they would collaborate with the team to find the most efficient and secure solution.",
+            "criteria": "The answer should be judged based on the candidate's ability to prioritize security, communicate effectively under pressure, demonstrate problem-solving skills, and make responsible decisions considering both technical and business constraints. Look for evidence of proactiveness, ownership, and a pragmatic approach to risk mitigation.",
+            "category": "Situation Based"
+        },
+        {
+            "id": "10",
+            "question": "In your resume, you mentioned contributing to 'Innerve'24,' an annual flagship event by IET, focusing on technical content creation and designing CTF challenges. Suppose after the event, multiple participants express concerns about a particular challenge, claiming it was ambiguous and poorly designed, leading to widespread frustration. As an executive member, how would you address this feedback, what steps would you take to understand the root cause of the problem, and how would you prevent similar issues in future events?",
+            "template": "The candidate should outline a structured approach to address the feedback. This includes acknowledging the participants' concerns, gathering detailed information about the specific issues with the challenge, analyzing the design process to identify potential flaws, and proposing corrective actions for future CTF designs. The candidate should also demonstrate an understanding of the importance of constructive feedback and continuous improvement. They may also talk about the need to get feedback from fellow developers before the CTF goes live to avoid these scenarios.",
+            "criteria": "The answer should be evaluated based on the candidate's ability to take ownership of a problem, demonstrate empathy towards the participants, analyze the situation objectively, and propose concrete solutions for preventing similar issues in the future. Look for evidence of strong communication skills, a commitment to quality, and a proactive approach to process improvement.",
+            "category": "Situation Based"
+        }
+    ]
+}

@@ -36,3 +36,9 @@ tmp/
 .env
 *.db
 .DS_Store
+.streamlit
+
+
+#ignoring the service account key
+serviceAccountKey.json
+client_secrets.json

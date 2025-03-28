@@ -2,6 +2,10 @@ import streamlit as st
 import json
 import random
 from typing import Dict, List
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 import PyPDF2
 import os
 from phi.agent import Agent, RunResponse
@@ -18,6 +22,7 @@ from datetime import datetime
 import base64
 import io
 from Agents.document import CheatsheetGenerator
+from utils.auth_utils import verify_google_token, save_user_to_firebase, check_session_validity, init_session, clear_session
 
 load_dotenv()
 
@@ -609,8 +614,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-def to_json(data_string):  
-    json_data = json.loads('[' + data_string.replace('}\n{', '}, {') + ']')
+def to_json(data_string):
+    # Format the string with normal string methods instead of f-string
+    formatted_string = '[' + data_string.replace('}\n{', '}, {') + ']'
+    json_data = json.loads(formatted_string)
     return json.dumps(json_data, indent=4)
 
 def extract_text_from_pdf(pdf_content):
@@ -856,6 +863,19 @@ def format_time_remaining(elapsed_time):
 
 def main():
     # Initialize session state variables if they don't exist
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'login_time' not in st.session_state:
+        st.session_state.login_time = None
+    if 'user_info' not in st.session_state:
+        st.session_state.user_info = None
+    
+    # Check login status and session validity
+    if not st.session_state.logged_in or not check_session_validity():
+        display_login_page()
+        return
+
+    # Rest of your existing main function code
     if 'page' not in st.session_state:
         st.session_state.page = 'home'
     if 'questions_generated' not in st.session_state:
@@ -1433,8 +1453,6 @@ def main():
                             st.session_state.page = 'report'
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
-                        
-                        st.markdown('</div>', unsafe_allow_html=True)
 
         # Report page
         elif st.session_state.page == 'report':
@@ -1470,6 +1488,98 @@ def main():
             else:
                 # Display the report
                 display_report()
+
+def display_login_page():
+    """Display the custom login page with Google OAuth."""
+    st.markdown("""
+        <style>
+        .login-container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 40px;
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    st.title("Welcome to AI Interview System")
+    st.markdown("Please sign in with your NITK email to continue")
+
+    # Create OAuth flow with increased time tolerance
+    if 'oauth_state' not in st.session_state:
+        client_secrets_file = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
+        flow = Flow.from_client_secrets_file(
+            client_secrets_file,
+            scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'],
+            redirect_uri=st.secrets["REDIRECT_URI"]
+        )
+        
+        # Generate authorization URL with increased tolerance
+        auth_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='select_account'
+        )
+        st.session_state.oauth_state = state
+
+        st.markdown(f"""
+            <a href="{auth_url}" class="login-button">
+                <img src="https://www.google.com/favicon.ico" width="20" height="20"/>
+                Sign in with Google
+            </a>
+        """, unsafe_allow_html=True)
+
+    # Handle OAuth callback using new st.query_params
+    query_params = st.query_params
+    if 'code' in query_params:
+        try:
+            flow = Flow.from_client_secrets_file(
+                client_secrets_file,
+                scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'],
+                state=st.session_state.oauth_state,
+                redirect_uri=st.secrets["REDIRECT_URI"]
+            )
+            
+            flow.fetch_token(code=query_params['code'])
+            credentials = flow.credentials
+
+            # Verify token with increased time tolerance
+            id_info = id_token.verify_oauth2_token(
+                credentials.id_token,
+                requests.Request(),
+                st.secrets["GOOGLE_CLIENT_ID"],
+                clock_skew_in_seconds=900  # 15 minutes tolerance
+            )
+
+            # Verify NITK email domain
+            if not id_info['email'].endswith('@nitk.edu.in'):
+                st.error("Please use your NITK email address")
+                return
+
+            # Initialize session
+            st.session_state.user_info = id_info
+            st.session_state.logged_in = True
+            st.session_state.login_time = time.time()
+
+            # Clear OAuth state and redirect
+            del st.session_state.oauth_state
+            st.rerun()
+
+        except Exception as e:
+            st.error(f"Authentication failed: {str(e)}")
+            if "Token used too early" in str(e):
+                st.info("System clock synchronization issue detected. Please wait a moment...")
+                time.sleep(2)  # Add small delay
+                st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+def handle_logout():
+    clear_session()
+    st.rerun()
 
 def process_response(user_input: str, content_container):
     """Process user response and generate AI response with voice."""
@@ -1883,7 +1993,7 @@ def generate_pdf_report():
         pdf.cell(50, 10, "Total Questions", 1, 0, "L")
         pdf.cell(30, 10, str(total), 1, 0, "C")
         pdf.cell(30, 10, "100%", 1, 0, "C")
-        pdf.cell(80, 10, "", 1, 1, "C")
+        pdf.cell(80, 10, "", 0, 1, "C")
         
         # Correct on first attempt
         pdf.cell(50, 10, "Correct on First Try", 1, 0, "L")
@@ -2247,4 +2357,4 @@ def display_report():
     st.markdown("</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    main() 
+    main()

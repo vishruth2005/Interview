@@ -43,8 +43,10 @@ class LinkedInProfile(BaseModel):
     education: List[Education] = Field(..., description="A list detailing the educational qualifications attained by the individual.")
     experience: List[Experience] = Field(..., description="A list summarizing the professional experiences and roles held by the individual.")
 
-def to_json(data_string):  
-    json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
+def to_json(data_string):
+    # Format string without using f-strings to avoid backslash issues
+    formatted_string = '[' + data_string.replace('}\n{', '}, {') + ']'
+    json_data = json.loads(formatted_string)
     return json.dumps(json_data, indent=4)
 
 class ResumeBuilder:

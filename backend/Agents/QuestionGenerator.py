@@ -39,10 +39,10 @@ class DepthAnalysis(BaseModel):
 class Questions(BaseModel):
     questions:List[Question] = Field(..., description="List of questions generated.")
 
-def to_json(data_string):  
-    # Debugging statement to check the input string
-    print("Debug: Raw data_string before processing:", data_string)  # Add this line for debugging
-    json_data = json.loads(f'[{data_string.replace("}\n{", "}, {")}]')
+def to_json(data_string):
+    # Replace closing/opening braces with comma-separated version, then wrap in array
+    formatted_string = '[' + data_string.replace('}\n{', '}, {') + ']'
+    json_data = json.loads(formatted_string)
     return json.dumps(json_data, indent=4)
 
 class QuestionGenerator:
@@ -287,9 +287,14 @@ class QuestionGenerator:
             ],
             response_model = Questions
         )
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        skills_json_path = os.path.join(current_dir, '..', 'data', 'skills.json')
+        try:
+            with open(skills_json_path, 'r') as f:
+                self.skill_guide = json.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError("Skills guide file not found.")
         
-        with open('data/skills.json', 'r') as file:
-            self.skill_guide = json.load(file)
         self.situation_guide = {
             "collaboration": [
                 "Tell me about a time when you had to work closely with someone whose personality was very different from yours.",

@@ -1,25 +1,25 @@
 import os
-import firebase_admin
-from firebase_admin import credentials, auth
+from authlib.integrations.flask_client import OAuth
+from functools import wraps
+from flask import redirect, session, url_for
 
-# Load environment variables (make sure these are set in your environment)
-firebase_config = {
-    "type": os.getenv("FIREBASE_TYPE", "service_account"),
-    "project_id": os.getenv("VITE_FIREBASE_PROJECT_ID"),
-    "private_key_id": os.getenv("VITE_FIREBASE_PRIVATE_KEY_ID"),
-    "private_key": os.getenv("VITE_FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
-    "client_email": os.getenv("VITE_FIREBASE_CLIENT_EMAIL"),
-    "client_id": os.getenv("VITE_FIREBASE_CLIENT_ID"),
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": os.getenv("VITE_FIREBASE_CLIENT_CERT_URL")
-}
+oauth = OAuth()
+auth0 = oauth.register(
+    'auth0',
+    client_id=os.getenv("AUTH0_CLIENT_ID"),
+    client_secret=os.getenv("AUTH0_CLIENT_SECRET"),
+    api_base_url=f'https://{os.getenv("AUTH0_DOMAIN")}',
+    access_token_url=f'https://{os.getenv("AUTH0_DOMAIN")}/oauth/token',
+    authorize_url=f'https://{os.getenv("AUTH0_DOMAIN")}/authorize',
+    client_kwargs={
+        'scope': 'openid profile email',
+    },
+)
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate(firebase_config)
-firebase_admin.initialize_app(cred)
-
-# Now you can use Firebase auth features, for example:
-user = auth.get_user_by_email('example@example.com')
-print('Successfully fetched user data:', user.uid)
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'profile' not in session:
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated
