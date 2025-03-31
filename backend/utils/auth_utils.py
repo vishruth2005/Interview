@@ -6,6 +6,53 @@ import streamlit as st
 import time
 import os
 
+def is_token_valid():
+    """Check if the current session token is valid."""
+    if 'id_token' not in st.session_state:
+        return False
+        
+    try:
+        # Verify the token
+        id_info = id_token.verify_oauth2_token(
+            st.session_state.id_token,
+            requests.Request(),
+            st.secrets["GOOGLE_CLIENT_ID"],
+            clock_skew_in_seconds=900
+        )
+        
+        # Check if token is not expired
+        current_time = int(time.time())
+        if current_time >= id_info['exp']:
+            return False
+            
+        # Verify email domain
+        if not id_info['email'].endswith('@nitk.edu.in'):
+            return False
+            
+        return True
+    except Exception:
+        return False
+
+def check_auth():
+    """Check authentication status and redirect if needed."""
+    # Check if we have all required session data
+    required_keys = ['id_token', 'user_info', 'logged_in']
+    if not all(key in st.session_state for key in required_keys):
+        return False
+        
+    # Verify token validity
+    if not is_token_valid():
+        clear_session()
+        return False
+        
+    return True
+def auto_login():
+    """Attempt to automatically log in using stored tokens."""
+    if all(key in st.session_state for key in ['id_token', 'logged_in', 'user_info']):
+        if is_token_valid(st.session_state.id_token):
+            return True
+    return False
+
 def verify_google_token(token):
     try:
         # Increased clock skew tolerance and added specific error handling

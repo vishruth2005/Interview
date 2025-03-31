@@ -22,7 +22,7 @@ from datetime import datetime
 import base64
 import io
 from Agents.document import CheatsheetGenerator
-from utils.auth_utils import verify_google_token, save_user_to_firebase, check_session_validity, init_session, clear_session
+from utils.auth_utils import verify_google_token, save_user_to_firebase, check_session_validity, init_session, clear_session,auto_login,is_token_valid,check_auth
 
 load_dotenv()
 
@@ -865,10 +865,11 @@ def main():
     # Initialize session state variables if they don't exist
     if 'logged_in' not in st.session_state:
         st.session_state.logged_in = False
-    if 'login_time' not in st.session_state:
-        st.session_state.login_time = None
-    if 'user_info' not in st.session_state:
-        st.session_state.user_info = None
+
+    # Check authentication
+    if not check_auth():
+        display_login_page()
+        return
     
     # Check login status and session validity
     if not st.session_state.logged_in or not check_session_validity():
@@ -1491,41 +1492,49 @@ def main():
 
 def display_login_page():
     """Display the custom login page with Google OAuth."""
-    st.markdown("""
-        <style>
-        .login-container {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 40px;
-            text-align: center;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    
+    # Define consistent scopes
+    OAUTH_SCOPES = [
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+    ]
 
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    st.title("Welcome to AI Interview System")
-    st.markdown("Please sign in with your NITK email to continue")
+    # Try auto-login first
+    if check_auth():
+        return True
+    
+    query_params = st.query_params
+    client_secrets_file = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
 
-    # Create OAuth flow with increased time tolerance
+    # Create OAuth flow
     if 'oauth_state' not in st.session_state:
-        client_secrets_file = os.path.join(os.path.dirname(__file__), 'client_secrets.json')
         flow = Flow.from_client_secrets_file(
             client_secrets_file,
-            scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'],
+            scopes=OAUTH_SCOPES,
             redirect_uri=st.secrets["REDIRECT_URI"]
         )
         
-        # Generate authorization URL with increased tolerance
+        # Generate authorization URL with offline access
         auth_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
-            prompt='select_account'
+            prompt='consent'  # Force consent to get refresh token
         )
         st.session_state.oauth_state = state
+        # # Debug print statements for tokens
+            # print("\n=== OAuth Tokens ===")
+            # print(f"ID Token: {credentials.id_token}")
+            # print(f"Access Token: {credentials.token}")
+            # print(f"Refresh Token: {credentials.refresh_token}")
+            # print(f"Token URI: {credentials.token_uri}")
+            # print(f"Expiry: {credentials.expiry}")
+            # print(f"Scopes: {credentials.scopes}")
+            # print("==================\n")
+            # Continue with existing verification
 
+        st.title("Welcome to AI Interview System")
+        st.markdown("Please sign in with your NITK email to continue")
         st.markdown(f"""
             <a href="{auth_url}" class="login-button">
                 <img src="https://www.google.com/favicon.ico" width="20" height="20"/>
@@ -1533,50 +1542,50 @@ def display_login_page():
             </a>
         """, unsafe_allow_html=True)
 
-    # Handle OAuth callback using new st.query_params
-    query_params = st.query_params
+    # Handle OAuth callback
     if 'code' in query_params:
         try:
             flow = Flow.from_client_secrets_file(
                 client_secrets_file,
-                scopes=['openid', 'https://www.googleapis.com/auth/userinfo.email'],
+                scopes=OAUTH_SCOPES,
                 state=st.session_state.oauth_state,
                 redirect_uri=st.secrets["REDIRECT_URI"]
             )
             
+            # Exchange code for tokens
             flow.fetch_token(code=query_params['code'])
             credentials = flow.credentials
 
-            # Verify token with increased time tolerance
+            # Verify token
             id_info = id_token.verify_oauth2_token(
                 credentials.id_token,
                 requests.Request(),
                 st.secrets["GOOGLE_CLIENT_ID"],
-                clock_skew_in_seconds=900  # 15 minutes tolerance
-            )
+                clock_skew_in_seconds=900
+            )            
 
             # Verify NITK email domain
             if not id_info['email'].endswith('@nitk.edu.in'):
                 st.error("Please use your NITK email address")
                 return
 
-            # Initialize session
+            # Store tokens and user info in session state
+            st.session_state.id_token = credentials.id_token
+            st.session_state.access_token = credentials.token
+            st.session_state.refresh_token = credentials.refresh_token
             st.session_state.user_info = id_info
             st.session_state.logged_in = True
             st.session_state.login_time = time.time()
 
             # Clear OAuth state and redirect
-            del st.session_state.oauth_state
+            if 'oauth_state' in st.session_state:
+                del st.session_state.oauth_state
             st.rerun()
 
         except Exception as e:
             st.error(f"Authentication failed: {str(e)}")
-            if "Token used too early" in str(e):
-                st.info("System clock synchronization issue detected. Please wait a moment...")
-                time.sleep(2)  # Add small delay
-                st.rerun()
+            st.write("Error details:", str(e))
 
-    st.markdown("</div>", unsafe_allow_html=True)
 def handle_logout():
     clear_session()
     st.rerun()
