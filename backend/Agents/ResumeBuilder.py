@@ -27,10 +27,7 @@ class Skills(BaseModel):
     skills: List[str] = Field(..., description="Skills of that type")
 
 class Experience(BaseModel):
-    company_details: str = Field(..., description="The name of the company along with its location.")
-    contribution_1: str = Field(..., description="A brief description of a key responsibility or achievement in this role.")
-    contribution_2: str = Field(..., description="Another important responsibility or achievement that highlights your contributions.")
-    contribution_3: str = Field(..., description="A third significant responsibility or accomplishment that showcases your skills.")
+    whole_experience: str = Field(..., description="The entire experience input including company details, title, and all achievements/responsibilities.")
 
 class Education(BaseModel):
     degree_title: str = Field(..., description="The official title of the degree obtained.")
@@ -200,9 +197,25 @@ class ResumeBuilder:
         return skill_extraction_run.content
     
     def use_linked_in(self):
+        # Prepare experiences from the whole_experience inputs
+        formatted_experiences = []
+        if self.profile and 'experiences' in self.profile:
+            for idx, exp in enumerate(self.profile['experiences']):
+                if 'whole_experience' in exp and exp['whole_experience']:
+                    formatted_experiences.append({
+                        'index': idx + 1,
+                        'whole_experience': exp['whole_experience']
+                    })
+                
         prompt = (
-            f"This is the LinkedIn information in JSON format: {self.profile}."
-            "\n\nPlease structure the information in the following detailed format:"
+            f"This is the LinkedIn information in JSON format: {self.profile}.\n"
+            f"The experiences are provided in a whole_experience format as follows:\n"
+            
+            # Add each whole experience
+            + "\n".join([f"Experience {exp['index']}:\n{exp['whole_experience']}" for exp in formatted_experiences])
+            + "\n\n"
+            
+            "Please structure the information in the following detailed format:"
             
             "## [Insert Full Name]\n\n"
             
@@ -234,6 +247,13 @@ class ResumeBuilder:
             "   - **End Date:** [Format: 31st December 2006]\n"
 
             "\n\nNote: Ensure that all sections are filled out completely and accurately. Convert degree titles to their full forms (e.g., 'B.Tech in CS' becomes 'Bachelor of Technology in Computer Science'). Format dates as '1st January 1998' for clarity and aesthetic appeal."
+            
+            "\n\nFor experiences, carefully analyze each whole_experience text to:\n"
+            "1. Extract the job title, company name, and location\n"
+            "2. Format them as 'Job Title (Company Name, Location)'\n"
+            "3. Extract or identify 3 key bullet points about responsibilities or achievements\n"
+            "4. Format exactly as shown in the template above, with numbered experiences (1, 2, 3) and 3 bullet points each\n"
+            "5. The formatting MUST match the template exactly - this is critical"
         )
 
         run: RunResponse = self.agent.run(prompt)     

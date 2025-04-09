@@ -958,20 +958,22 @@ def main():
 
             # Input fields for experiences
             st.markdown("### Experiences")
+            st.markdown("_Enter each full experience as text, including company name, job title, and responsibilities. The AI will automatically format it._")
+            st.markdown("_Example: 'Senior Software Engineer at ABC Technologies, Seattle, WA. Led development of the company's main product. Worked with React and Node.js to build scalable web applications. Mentored junior developers.'_")
+            
             for i, experience in enumerate(st.session_state.experiences):
                 st.markdown(f"**Experience {i + 1}**")
-                company = st.text_input(f"Company Name {i + 1}:", value=experience.get('company', ''), key=f"company_{i}")
-                title = st.text_input(f"Title {i + 1}:", value=experience.get('title', ''), key=f"title_{i}")
-                description = st.text_area(f"Description {i + 1}:", value=experience.get('description', ''), key=f"description_{i}")
+                exp_text = st.text_area(f"Experience {i + 1}:", 
+                                      value=experience.get('whole_experience', ''), 
+                                      key=f"experience_{i}",
+                                      help="Enter your full experience including title, company, location and responsibilities all together. You can either type or use voice input.")
                 st.session_state.experiences[i] = {
-                    "company": company,
-                    "title": title,
-                    "description": description
+                    "whole_experience": exp_text
                 }
             
             # Button to add more experiences
             if st.button("Add Experience"):
-                st.session_state.experiences.append({"company": "", "title": "", "description": ""})
+                st.session_state.experiences.append({"whole_experience": ""})
                 st.rerun()  # Rerun to display new fields
 
             # Input fields for education
