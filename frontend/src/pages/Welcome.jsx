@@ -32,9 +32,9 @@ function Welcome() {
               <div className="flex justify-center mb-4">
                 <FaFileAlt className="text-6xl text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-4">Resume Builder</h3>
+              <h3 className="text-xl font-semibold mb-4">Cheat Sheet Generator</h3>
               <p className="text-gray-600 mb-6">
-                Generate Resume with our latest AI Resume Builder
+                Generate cheat sheet with our AI Cheat Sheet Generator
               </p>
               <Link to="/resume-builder" className="btn-primary inline-block">
                 Proceed

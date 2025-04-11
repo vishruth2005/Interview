@@ -135,7 +135,7 @@ const InterviewQuestions = () => {
     })
       .then((response) => response.json())
       .then((result) => {
-        setMessages([...messages, { type: "system", content: `Question ${result.question.id}: ${result.question.question}`}]);
+        setMessages([...messages, { type: "system", content: `Question ${result.question.question}`}]);
         setQuestionId(result.question.id)
         
       })
