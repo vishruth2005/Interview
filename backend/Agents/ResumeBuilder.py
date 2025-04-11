@@ -27,10 +27,7 @@ class Skills(BaseModel):
     skills: List[str] = Field(..., description="Skills of that type")
 
 class Experience(BaseModel):
-    company_details: str = Field(..., description="The name of the company along with its location.")
-    contribution_1: str = Field(..., description="A brief description of a key responsibility or achievement in this role.")
-    contribution_2: str = Field(..., description="Another important responsibility or achievement that highlights your contributions.")
-    contribution_3: str = Field(..., description="A third significant responsibility or accomplishment that showcases your skills.")
+    whole_experience: str = Field(..., description="The entire experience input including company details, title, and all achievements/responsibilities.")
 
 class Education(BaseModel):
     degree_title: str = Field(..., description="The official title of the degree obtained.")
@@ -49,9 +46,8 @@ def to_json(data_string):
 
 class ResumeBuilder:
     
-    def __init__(self, repos, linkedin_profile_url, role):
+    def __init__(self, repos, linkedin_profile_data, role):
         self.access_token = os.getenv("GITHUB_ACCESS_TOKEN")
-        self.linkedin_profile_url = linkedin_profile_url
         self.role = role
         self.agent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), markdown=True)
         self.projectagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Projects)
@@ -60,37 +56,7 @@ class ResumeBuilder:
         self.github_client = self.authenticate()
         self.repo_list = repos
         self.parsed_readmes = {}  # Store parsed READMEs in the class
-        # self.profile = {'name': 'Vishruth Srivatsa', 'occupation': "Executive member at Web Enthusiasts'\u200b Club NITK", 'experiences': [{'company': "Web Enthusiasts'\u200b Club NITK", 'title': 'Executive member', 'description': "-Participated in Unfold'24 hackathon organized by Devfolio and built a project called JusticeChain\n-Participated in EthIndia'2k24 and won the pool prize of CDP for building a project called AIgentX\n-Participated in Hackverse 5.0 and won the Fintech track for building a project called Viresco\n-Took a research paper discussion on Combating Adversial Attacks using Robust Word Recognition Model"}, {'company': 'IEEE', 'title': 'Executive member', 'description': '- Organised an event called BlackBox and held a talk on machine learning for first years.'}, {'company': 'Genesis NITK', 'title': 'Executive member', 'description': '- Participated in several college level dance competitions\n- Won second place in college level group dance competition as part of Genesis crew'}], 'education': [{'start': '1 8 2023', 'end': '30 4 2027', 'field_of_study': 'Computational And Data Science', 'degree_name': 'Bachelor of Technology - BTech', 'school': 'National Institute of Technology Karnataka'}, {'start': '1 6 2021', 'end': '30 4 2023', 'field_of_study': 'Science', 'degree_name': 'Higher Secondary Education', 'school': 'BASE PU College'}]}
-
-    def fetch_linkedin_profile(self):
-        async def get_filtered_profile_data(profile_url):
-            proxycurl = Proxycurl(os.getenv("PROXYCURL_API_KEY"))
-            profile_data = await proxycurl.linkedin.person.get(linkedin_profile_url=profile_url)
-
-            # Filter the relevant data
-            filtered_data = {
-                "name": profile_data['full_name'],
-                "occupation": profile_data['occupation'],
-                "experiences": [
-                    {
-                        "company": exp['company'],
-                        "title": exp['title'],
-                        "description": exp['description']
-                    } for exp in profile_data['experiences'] if exp.get('description')
-                ],
-                "education": [
-                    {
-                        "start": str(edu['starts_at']['day']) + '-' + str(edu['starts_at']['month']) + '-' + str(edu['starts_at']['year']),
-                        "end": str(edu['ends_at']['day']) + '-' + str(edu['ends_at']['month']) + '-' + str(edu['ends_at']['year']),
-                        "field_of_study": edu['field_of_study'],
-                        "degree_name": edu['degree_name'],
-                        "school": edu["school"]
-                    } for edu in profile_data['education']
-                ]
-            }
-            return filtered_data
-
-        self.profile = asyncio.run(get_filtered_profile_data(self.linkedin_profile_url))
+        self.profile = linkedin_profile_data  # Use the provided LinkedIn profile data
 
     def authenticate(self) -> Github:
         """Authenticate with GitHub using the provided access token."""
@@ -231,9 +197,25 @@ class ResumeBuilder:
         return skill_extraction_run.content
     
     def use_linked_in(self):
+        # Prepare experiences from the whole_experience inputs
+        formatted_experiences = []
+        if self.profile and 'experiences' in self.profile:
+            for idx, exp in enumerate(self.profile['experiences']):
+                if 'whole_experience' in exp and exp['whole_experience']:
+                    formatted_experiences.append({
+                        'index': idx + 1,
+                        'whole_experience': exp['whole_experience']
+                    })
+                
         prompt = (
-            f"This is the LinkedIn information in JSON format: {self.profile}."
-            "\n\nPlease structure the information in the following detailed format:"
+            f"This is the LinkedIn information in JSON format: {self.profile}.\n"
+            f"The experiences are provided in a whole_experience format as follows:\n"
+            
+            # Add each whole experience
+            + "\n".join([f"Experience {exp['index']}:\n{exp['whole_experience']}" for exp in formatted_experiences])
+            + "\n\n"
+            
+            "Please structure the information in the following detailed format:"
             
             "## [Insert Full Name]\n\n"
             
@@ -265,6 +247,13 @@ class ResumeBuilder:
             "   - **End Date:** [Format: 31st December 2006]\n"
 
             "\n\nNote: Ensure that all sections are filled out completely and accurately. Convert degree titles to their full forms (e.g., 'B.Tech in CS' becomes 'Bachelor of Technology in Computer Science'). Format dates as '1st January 1998' for clarity and aesthetic appeal."
+            
+            "\n\nFor experiences, carefully analyze each whole_experience text to:\n"
+            "1. Extract the job title, company name, and location\n"
+            "2. Format them as 'Job Title (Company Name, Location)'\n"
+            "3. Extract or identify 3 key bullet points about responsibilities or achievements\n"
+            "4. Format exactly as shown in the template above, with numbered experiences (1, 2, 3) and 3 bullet points each\n"
+            "5. The formatting MUST match the template exactly - this is critical"
         )
 
         run: RunResponse = self.agent.run(prompt)     
@@ -274,7 +263,6 @@ class ResumeBuilder:
         self.parse_readmes()
         resume_result = self.build_projects()
         skills_result = self.build_skills()
-        self.fetch_linkedin_profile()
         linked_in = self.use_linked_in()
 
         return resume_result, skills_result, linked_in

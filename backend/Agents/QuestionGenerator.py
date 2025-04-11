@@ -128,7 +128,7 @@ class QuestionGenerator:
                 "Based pn the given details, generate good interview questions."
             ),
             instructions = [
-                "Generate 5 well-structured interview questions based on the provided insights.",
+                "Generate 3 well-structured interview questions based on the provided insights.",
                 "Ensure question depth as follows:",
                 "   - First two questions: Medium-level, focusing on moderately detailed subtopics.",
                 "   - Remaining questions: In-depth, highly specific, focusing on niche subtopics critical to the role.",
@@ -155,7 +155,7 @@ class QuestionGenerator:
                 "   5. question: [Highly specific and niche question on a critical subtopic]",
                 "       expected_approach: [Expected approach to solve the problem]",
                 "       criteria: [Criteria to judge the answer]",
-                "Ensure the output follows the given format without unnecessary text and includes only 5 questions."
+                "Ensure the output follows the given format without unnecessary text and includes only 3 questions."
             ],
             response_model = Questions
         )
@@ -217,7 +217,7 @@ class QuestionGenerator:
                 "1. **Identify Relevant Technical Skills:**",
                 "   - List all technical skills mentioned in the skill analysis relevant to the company's requirements.",
                 "2. **Generate Technical Questions:**",
-                "   - Create 10 well-structured and thoughtful technical questions using the identified skills.",
+                "   - Create 2 well-structured and thoughtful technical questions using the identified skills.",
                 "3. **Align with Example Questions:**",
                 "   - Ensure questions match the style, depth, and structure of the example questions in the guide.",
                 "4. **Role-Specific Focus:**",
@@ -239,7 +239,7 @@ class QuestionGenerator:
                 "        criteria: [Criteria to judge the answer]",
                 "7. Ensure the output follows the given format without unnecessary text.",
                 "8. Provide a detailed expected approach and criteria for each question.",
-                "9. Generate exactly 10 questions."
+                "9. Generate exactly 2 questions."
             ],
             response_model = Questions
         )
