@@ -28,13 +28,19 @@ class Question(BaseModel):
     expected_approach: str = Field(..., description="The expected approach to solve the problem should be inserted here.")
     criteria: str = Field(..., description="The criteria to judge the answer for the question should be inserted here.")
 
-class KeywordAnalysis(BaseModel):
+class ProjectKeywords(BaseModel):
     project_name:str = Field(..., description="Name of the project")
     keywords:List[str] = Field(..., description="List of keywords identified.")
 
-class DepthAnalysis(BaseModel):
+class KeywordAnalysis(BaseModel):
+    projects:List[ProjectKeywords] = Field(..., description="List of all projects with their keywords.")
+
+class ProjectDepthAnalysis(BaseModel):
     project_name:str = Field(..., description="Name of the project.")
     analysis: List[Keyword] = Field(..., description="A list of depth analysis for each keyword.")
+
+class DepthAnalysis(BaseModel):
+    projects:List[ProjectDepthAnalysis] = Field(..., description="List of all projects with their depth analysis.")
 
 class Questions(BaseModel):
     questions:List[Question] = Field(..., description="List of questions generated.")
@@ -51,10 +57,10 @@ class QuestionGenerator:
         self.resume = resume_content  # Extract text from the PDF content
         self.role = role
         self.company = company
-        self.agent1 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model=Question)
-        self.agent2 = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")))
+        self.agent1 = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")), response_model=Question)
+        self.agent2 = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")))
         self.keyword_analyser = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are a highly skilled and experienced keyword analysis expert specializing in resumes and professional documents."
                 "You are provided with a resume."
@@ -66,13 +72,14 @@ class QuestionGenerator:
                 "   - Technical terms (e.g., programming languages, frameworks, tools)",
                 "   - Domain-specific jargon (e.g., finance, healthcare, AI-related terminology)",
                 "   - Other significant descriptors or action verbs",
-                "Format the output as follows: Project Name: [Comma-separated list of identified keywords]",
+                "Return a structured list of all projects with their keywords.",
+                "Each project should have a project_name and a list of keywords.",
                 "Ensure the output is accurate, concise, and captures the essence of the key elements from each project."
             ],
             response_model = KeywordAnalysis
         )
         self.depth_analyser = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "For each of the keywords specified for every project in the input provided,"
                 "Your task involves decomposing these keywords into detailed sub-concepts."
@@ -81,13 +88,13 @@ class QuestionGenerator:
                 "Decompose each keyword into specific, well-defined sub-concepts or components.",
                 "Include technical, functional, and contextual sub-concepts where applicable, considering domain nuances.",
                 "Ensure each sub-concept is comprehensive, granular, and captures all relevant dimensions.",
-                "Format the output as follows:",
-                "   Project1:",
-                "       Keyword1: Sub-concept1, Sub-concept2, Sub-concept3, ...",
-                "       Keyword2: Sub-concept1, Sub-concept2, Sub-concept3, ...",
-                "   Project2:",
-                "       Keyword1: Sub-concept1, Sub-concept2, Sub-concept3, ...",
-                "       Keyword2: Sub-concept1, Sub-concept2, Sub-concept3, ...",
+                "Return a structured list of all projects with their keyword depth analysis.",
+                "For each project:",
+                "   - Include the project_name",
+                "   - For each keyword in that project, provide:",
+                "       - The keyword name",
+                "       - A list of subtopics (sub-concepts) for that keyword",
+                "Ensure all JSON is properly formatted with valid syntax.",
                 "Provide examples to clarify complex sub-concepts if necessary.",
                 "Ensure the decomposition is exhaustive and provides a detailed understanding of each topic."
             ],
@@ -95,7 +102,7 @@ class QuestionGenerator:
         )
 
         self.skill_analyser = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are a highly experienced resume assistant and career advisor with expertise in tailoring resumes for specific companies and roles."
             ),
@@ -122,7 +129,7 @@ class QuestionGenerator:
         )
 
         self.interview_questions_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are an experienced question creator."
                 "Based pn the given details, generate good interview questions."
@@ -160,7 +167,7 @@ class QuestionGenerator:
             response_model = Questions
         )
         self.theoretical_questions_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are a theoretical expert."
                 "Based on the details provided generate good theoretical questions."
@@ -206,7 +213,7 @@ class QuestionGenerator:
             response_model = Questions
         )
         self.skill_questions_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are a person speacialised in generating skill related questions."
                 "Based on the given input generate skill related questions."
@@ -244,7 +251,7 @@ class QuestionGenerator:
             response_model = Questions
         )
         self.situations_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description = (
                 "You are a highly experienced situation based questions creator."
                 "Based on the given input create good situation based questions."
@@ -353,7 +360,10 @@ class QuestionGenerator:
 
     def analyze_depth(self, keyword_analysis):
         """Decompose keywords into detailed sub-concepts."""
-        run: RunResponse = self.depth_analyser.run(keyword_analysis)
+        # Convert Pydantic model to JSON string for proper message formatting
+        keyword_json = keyword_analysis.model_dump_json(indent=2) if hasattr(keyword_analysis, 'model_dump_json') else str(keyword_analysis)
+        prompt = f"Analyze the following keyword analysis and decompose each keyword into detailed sub-concepts:\n\n{keyword_json}"
+        run: RunResponse = self.depth_analyser.run(prompt)
         return run.content
 
     def analyze_skills(self):
@@ -371,33 +381,45 @@ class QuestionGenerator:
         self.keywords = self.analyze_keywords()
         self.depth_analysis = self.analyze_depth(self.keywords)
         self.skill_analysis = self.analyze_skills()
+        
+        # Serialize analysis data properly
+        depth_str = self.depth_analysis.model_dump_json(indent=2) if hasattr(self.depth_analysis, 'model_dump_json') else str(self.depth_analysis)
+        skill_str = self.skill_analysis.model_dump_json(indent=2) if hasattr(self.skill_analysis, 'model_dump_json') else str(self.skill_analysis)
+        
         prompt = (
-            f"You are an experienced and highly skilled interviewer representing the company: {self.company}."
-            f"The user's resume content is provided as follows: {self.resume}."
-            f"The target role for the user is: {self.role}."
-            f"The {self.depth_analysis} provides detailed insights into relevant concepts and sub-concepts."
-            f"The {self.skill_analysis} outlines the necessity and relevance of each skill based on company and role requirements."
+            f"You are an experienced and highly skilled interviewer representing the company: {self.company}.\n"
+            f"The user's resume content is provided as follows: {self.resume}\n\n"
+            f"The target role for the user is: {self.role}\n\n"
+            f"Depth Analysis:\n{depth_str}\n\n"
+            f"Skill Analysis:\n{skill_str}\n\n"
+            f"Generate interview questions based on the above information."
         )
         run: RunResponse = self.interview_questions_generator.run(prompt)
         return run.content
     
     def generate_theoretical_interview_questions(self):
         """Generate Theoretical interview questions based on keyword, depth, and skill analyses."""
+        depth_str = self.depth_analysis.model_dump_json(indent=2) if hasattr(self.depth_analysis, 'model_dump_json') else str(self.depth_analysis)
+        
         prompt = (
-            f"You are an experienced and highly skilled interviewer representing the company: {self.company}."
-            f"The user's resume content is provided as follows: {self.resume}."
-            f"The {self.depth_analysis} provides detailed insights into relevant concepts and sub-concepts extracted from the user's resume."
+            f"You are an experienced and highly skilled interviewer representing the company: {self.company}.\n"
+            f"The user's resume content is provided as follows: {self.resume}\n\n"
+            f"Depth Analysis:\n{depth_str}\n\n"
+            f"Generate theoretical interview questions based on the above information."
         )
         run: RunResponse = self.theoretical_questions_generator.run(prompt)
         return run.content
     
     def generate_skill_questions(self):
         """Generate interview questions based on the skills."""
+        skill_str = self.skill_analysis.model_dump_json(indent=2) if hasattr(self.skill_analysis, 'model_dump_json') else str(self.skill_analysis)
+        
         prompt = (
-            f"Assume you are an experienced interviewer representing the company '{self.company}'. "
-            f"You are conducting an interview for a candidate applying for the role of '{self.role}'. "
-            f"The skill analysis of the candidate's resume has identified the following: {self.skill_analysis}. "
-            f"You also have access to a guide that outlines example topics and corresponding question formats in '{self.skill_guide}'. "
+            f"Assume you are an experienced interviewer representing the company '{self.company}'.\n"
+            f"You are conducting an interview for a candidate applying for the role of '{self.role}'.\n\n"
+            f"Skill Analysis:\n{skill_str}\n\n"
+            f"Guide:\n{json.dumps(self.skill_guide, indent=2)}\n\n"
+            f"Generate skill-based interview questions based on the above information."
         )
         run: RunResponse = self.skill_questions_generator.run(prompt)
         return run.content

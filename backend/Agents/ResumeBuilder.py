@@ -49,10 +49,10 @@ class ResumeBuilder:
     def __init__(self, repos, linkedin_profile_data, role):
         self.access_token = os.getenv("GITHUB_ACCESS_TOKEN")
         self.role = role
-        self.agent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), markdown=True)
-        self.projectagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Projects)
-        self.linkinagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = LinkedInProfile)
-        self.skillagent = Agent(model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")), response_model = Skills)
+        self.agent = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")), markdown=True)
+        self.projectagent = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")), response_model = Projects)
+        self.linkinagent = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")), response_model = LinkedInProfile)
+        self.skillagent = Agent(model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")), response_model = Skills)
         self.github_client = self.authenticate()
         self.repo_list = repos
         self.parsed_readmes = {}  # Store parsed READMEs in the class

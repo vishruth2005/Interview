@@ -62,7 +62,7 @@ class CheatsheetGenerator:
         
         # Agent for generating skill-based Q&A pairs
         self.skill_qa_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description=(
                 "You are an expert in generating comprehensive interview preparation materials."
                 "Your task is to create detailed question and answer pairs for skill-based interview questions."
@@ -80,7 +80,7 @@ class CheatsheetGenerator:
         
         # Agent for generating project-based Q&A pairs
         self.project_qa_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description=(
                 "You are an expert in generating comprehensive interview preparation materials."
                 "Your task is to create detailed project-based question and answer pairs based on resume content."
@@ -98,7 +98,7 @@ class CheatsheetGenerator:
         
         # Agent for generating theoretical Q&A pairs
         self.theoretical_qa_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description=(
                 "You are an expert in generating comprehensive interview preparation materials."
                 "Your task is to create detailed theoretical question and answer pairs."
@@ -116,7 +116,7 @@ class CheatsheetGenerator:
         
         # Agent for generating behavioral Q&A pairs
         self.behavioral_qa_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             tools=[DuckDuckGo()],
             description=(
                 "You are an expert in generating comprehensive interview preparation materials."
@@ -139,7 +139,7 @@ class CheatsheetGenerator:
         
         # Agent for generating interview presentation tips
         self.interview_tips_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             description=(
                 "You are an expert in interview coaching and preparation."
                 "Your task is to create comprehensive tips for self-presentation during interviews."
@@ -158,7 +158,7 @@ class CheatsheetGenerator:
 
         # Agent for generating things to learn
         self.learning_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             tools=[DuckDuckGo()],
             description=(
                 "You are an expert career advisor and technical learning consultant. "
@@ -186,7 +186,7 @@ class CheatsheetGenerator:
         
         # Agent for retrieving company-specific information
         self.company_info_generator = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv("GEMINI_API_KEY")),
             tools=[DuckDuckGo()],
             description=(
                 "You are an expert corporate researcher specializing in gathering comprehensive information about companies. "

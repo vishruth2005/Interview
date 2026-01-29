@@ -625,7 +625,7 @@ class QuestionSelector:
         self.question_attempts = {}  # Format: {question_id: number_of_attempts}
         self.questions_by_category = {}  # Format: {category: [question_ids]}
         self.question_selector_agent = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv('GEMINI_API_KEY')),
             storage=SqlAgentStorage(table_name="selector_sessions", db_file="tmp/selector_storage.db"),
             add_history_to_messages=True,
             num_history_responses=3,
@@ -700,7 +700,7 @@ class QuestionSelector:
 
 def initialize_agent(question: str, template: str, criteria: str) -> Agent:
     return Agent(
-        model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+        model=Gemini(id="gemini-2.5-flash", api_key=os.getenv('GEMINI_API_KEY')),
         storage=SqlAgentStorage(table_name="agent_sessions", db_file="tmp/agent_storage.db"),
         # memory=AgentMemory(db=vector_db, create_session_summary=True, create_user_memories=True),
         add_history_to_messages=True,
@@ -1757,7 +1757,7 @@ def generate_report():
     
     # Use the Gemini model to generate the summary and areas to improve
     agent = Agent(
-        model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+        model=Gemini(id="gemini-2.5-flash", api_key=os.getenv('GEMINI_API_KEY')),
         add_history_to_messages=False,
         num_history_responses=0
     )

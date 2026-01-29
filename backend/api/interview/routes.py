@@ -30,7 +30,7 @@ class QuestionSelector:
     def __init__(self):
         self.asked_questions = {}  # Format: {question_id: result}
         self.question_selector_agent = Agent(
-            model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+            model=Gemini(id="gemini-2.5-flash", api_key=os.getenv('GEMINI_API_KEY')),
             storage=SqlAgentStorage(table_name="selector_sessions", db_file="tmp/selector_storage.db"),
             add_history_to_messages=True,
             num_history_responses=3,
@@ -98,7 +98,7 @@ class QuestionSelector:
 
 def initialize_agent(question: str, template: str, criteria: str) -> Agent:
     return Agent(
-        model=Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv('GEMINI_API_KEY')),
+        model=Gemini(id="gemini-2.5-flash", api_key=os.getenv('GEMINI_API_KEY')),
         storage=SqlAgentStorage(table_name="agent_sessions", db_file="tmp/agent_storage.db"),
         # memory=AgentMemory(db=vector_db, create_session_summary=True, create_user_memories=True),
         add_history_to_messages=True,
